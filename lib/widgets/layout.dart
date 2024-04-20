@@ -36,9 +36,12 @@ class Layout extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Image.asset(lightLogo
-                    ? 'assets/images/lg_logo_light.png'
-                    : 'assets/images/lg_logo.png'),
+                Image.asset(
+                  lightLogo
+                      ? 'assets/images/lg_logo_light.png'
+                      : 'assets/images/lg_logo.png',
+                  width: 105,
+                ),
                 SizedBox(
                   height: MediaQuery.of(context).size.height * 0.05,
                 ),

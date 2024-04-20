@@ -13,12 +13,14 @@ class StartPage extends StatelessWidget {
     return Layout(
       decorations: [
         Positioned(
-            bottom: -50,
-            left: 0,
-            right: 0,
-            child: Image.asset(
-              'assets/images/screaming_woman.png',
-            ))
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Image.asset(
+            width: 546,
+            'assets/images/screaming_woman.png',
+          ),
+        )
       ],
       children: [
         const Text(

@@ -30,12 +30,14 @@ class ScreamPageState extends State<ScreamPage> {
 
   AudioPlayer audioPlayer = AudioPlayer();
   double score = 0.0;
-  final minimumScore = 1000.0;
+  final minimumScore = 8000.0;
   final int stopInSeconds = 15;
   final CountDownController _controller = CountDownController();
   final int _duration = 5;
   bool isStarted = false;
   bool isReached = false;
+  late Timer timer;
+  int ms = 0;
 
   @override
   void dispose() {
@@ -136,42 +138,42 @@ class ScreamPageState extends State<ScreamPage> {
       Stack(
         children: [
           Container(
-            height: MediaQuery.of(context).size.height * 0.25,
+            height: MediaQuery.of(context).size.height * 0.238,
             width: MediaQuery.of(context).size.width * 0.8,
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/images/tv.png'),
+                image: AssetImage('assets/images/tv_new.png'),
                 fit: BoxFit.fitWidth,
               ),
             ),
           ),
-          SizedBox(
-            height: isReached
+          LimitedBox(
+            maxHeight: isReached
                 ? 0
-                : (MediaQuery.of(context).size.height * 0.25) -
-                    ((MediaQuery.of(context).size.height * 0.25) *
+                : (MediaQuery.of(context).size.height * 0.238) -
+                    ((MediaQuery.of(context).size.height * 0.238) *
                         (score == 0.0
                             ? 0
                             : score > minimumScore
                                 ? 1
                                 : score / minimumScore)),
-            width: MediaQuery.of(context).size.width * 0.8,
+            maxWidth: MediaQuery.of(context).size.width * 0.8,
             child: Container(
-              height: MediaQuery.of(context).size.height * 0.25,
+              height: MediaQuery.of(context).size.height * 0.238,
               width: MediaQuery.of(context).size.width * 0.8,
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('assets/images/tv.png'),
-                  fit: BoxFit.fitWidth,
-                  colorFilter: ColorFilter.mode(Colors.black, BlendMode.srcATop)
-                ),
+                    image: AssetImage('assets/images/tv_new.png'),
+                    fit: BoxFit.fitWidth,
+                    colorFilter:
+                        ColorFilter.mode(Colors.black, BlendMode.srcATop)),
               ),
             ),
           ),
         ],
       ),
       Text(
-        '${(_current?.duration?.inMinutes ?? 0) % 60}:${(_current?.duration?.inSeconds ?? 0) % 60}',
+        '${(_current?.duration?.inMinutes ?? 0) % 60}:${(_current?.duration?.inSeconds ?? 0) % 60}.$ms',
         style: pathwayGothicOne48,
       ),
       // Debug Buttons
@@ -246,7 +248,7 @@ class ScreamPageState extends State<ScreamPage> {
       setState(() {
         _current = recording;
       });
-      const tick = Duration(milliseconds: 50);
+      const tick = Duration(milliseconds: 24);
       Timer.periodic(tick, (Timer t) async {
         if (_currentStatus == RecordingStatus.Stopped) {
           t.cancel();
@@ -255,7 +257,9 @@ class ScreamPageState extends State<ScreamPage> {
         var current = await _recorder?.current(channel: 0);
         final peak = current!.metering!.peakPower!;
         // print(current.status);
+        ms += tick.inMilliseconds;
         setState(() {
+          ms = ms % 1000;
           if (score >= minimumScore) {
             isReached = true;
           }
@@ -272,9 +276,7 @@ class ScreamPageState extends State<ScreamPage> {
         }
       });
 
-      Future.delayed(
-          Duration(seconds: stopInSeconds, milliseconds: 500),
-          _stop);
+      timer = Timer(Duration(seconds: stopInSeconds, milliseconds: 500), _stop);
     } catch (e) {
       debugPrint('Error: $e');
     }
@@ -284,6 +286,7 @@ class ScreamPageState extends State<ScreamPage> {
     debugPrint('stop called');
     if (_currentStatus == RecordingStatus.Recording) {
       var result = await _recorder?.stop();
+      timer.cancel();
 
       File file = widget.localFileSystem.file(result?.path);
       file.deleteSync();
@@ -295,7 +298,8 @@ class ScreamPageState extends State<ScreamPage> {
     if (isReached && mounted) {
       // ignore: use_build_context_synchronously
       Navigator.pushNamed(context, '/select-prize');
-    } else {
+    }
+    if (!isReached && mounted) {
       // ignore: use_build_context_synchronously
       Navigator.pushNamed(context, '/failed');
     }

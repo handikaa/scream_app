@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:scream_app/widgets/layout.dart';
+import 'package:scream_app/widgets/start_button.dart';
 
 import '../style.dart';
 
@@ -12,7 +13,7 @@ class ResultPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  Layout(
+    return Layout(
       children: [
         Text(
           participantId,
@@ -25,6 +26,19 @@ class ResultPage extends StatelessWidget {
         Text(
           'KEPADA KASIR',
           style: passionOne24.copyWith(height: 0.0),
+        ),
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.5,
+        ),
+        StartButton(
+          onPressed: () {
+            Navigator.popUntil(context, (route) => route.isFirst);
+          },
+          textStyle: passionOne24.copyWith(color: Colors.white),
+          child: Text(
+            'KEMBALI',
+            style: passionOne24.copyWith(color: Colors.white),
+          ),
         ),
       ],
     );

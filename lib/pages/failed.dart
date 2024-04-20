@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:scream_app/style.dart';
 import 'package:scream_app/widgets/layout.dart';
+import 'package:scream_app/widgets/start_button.dart';
 
 class FailedPage extends StatelessWidget {
   const FailedPage({super.key});
@@ -36,6 +37,17 @@ class FailedPage extends StatelessWidget {
           Text(
             'UNTUK MENYALAKAN TVNYA',
             style: passionOne32.copyWith(color: Colors.white),
+          ),
+          StartButton(
+            bgColor: Colors.white,
+            onPressed: () {
+              Navigator.popUntil(context, (route) => route.isFirst);
+            },
+            textStyle: passionOne24.copyWith(color: Colors.black),
+            child: Text(
+              'KEMBALI',
+              style: passionOne24.copyWith(color: Colors.black),
+            ),
           ),
         ],
       ),

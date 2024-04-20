@@ -7,7 +7,13 @@ class StartButton extends TextButton {
   // ignore: overridden_fields
   late final ButtonStyle style;
 
-  StartButton({super.key, required super.onPressed, required super.child}) {
+  StartButton(
+      {super.key,
+      required super.onPressed,
+      required super.child,
+      Color? bgColor,
+      TextStyle? textStyle,
+      }) {
     style = ButtonStyle(
       padding: MaterialStateProperty.all(
           const EdgeInsets.symmetric(horizontal: 20, vertical: 5)),
@@ -15,8 +21,9 @@ class StartButton extends TextButton {
         borderRadius: BorderRadius.circular(10),
       )),
       backgroundColor: MaterialStateProperty.all(
-        lGred,
+        bgColor ?? lGred,
       ),
+      textStyle: MaterialStateProperty.all(textStyle)
     );
   }
 }

@@ -276,7 +276,7 @@ class ScreamPageState extends State<ScreamPage> {
         }
       });
 
-      timer = Timer(Duration(seconds: stopInSeconds, milliseconds: 500), _stop);
+      timer = Timer(Duration(seconds: stopInSeconds), _stop);
     } catch (e) {
       debugPrint('Error: $e');
     }

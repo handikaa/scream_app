@@ -173,7 +173,7 @@ class ScreamPageState extends State<ScreamPage> {
         ],
       ),
       Text(
-        '${(_current?.duration?.inMinutes ?? 0) % 60}:${(_current?.duration?.inSeconds ?? 0) % 60}.$ms',
+        '${(_current?.duration?.inMinutes ?? 0) % 60}:${(_current?.duration?.inSeconds ?? 0) % 60}.${ms.toString().padLeft(3, '0')}',
         style: pathwayGothicOne48,
       ),
       // Debug Buttons

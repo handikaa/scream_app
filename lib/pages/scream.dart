@@ -142,7 +142,7 @@ class ScreamPageState extends State<ScreamPage> {
             width: MediaQuery.of(context).size.width * 0.8,
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/images/tv_new.png'),
+                image: AssetImage('assets/images/tv.png'),
                 fit: BoxFit.fitWidth,
               ),
             ),
@@ -163,7 +163,7 @@ class ScreamPageState extends State<ScreamPage> {
               width: MediaQuery.of(context).size.width * 0.8,
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                    image: AssetImage('assets/images/tv_new.png'),
+                    image: AssetImage('assets/images/tv.png'),
                     fit: BoxFit.fitWidth,
                     colorFilter:
                         ColorFilter.mode(Colors.black, BlendMode.srcATop)),
@@ -173,7 +173,7 @@ class ScreamPageState extends State<ScreamPage> {
         ],
       ),
       Text(
-        '${(_current?.duration?.inMinutes ?? 0) % 60}:${(_current?.duration?.inSeconds ?? 0) % 60}.${ms.toString().padLeft(3, '0')}',
+        '${((_current?.duration?.inMinutes ?? 0) % 60).toString().padLeft(2, '0')}:${((_current?.duration?.inSeconds ?? 0) % 60).toString().padLeft(2, '0')}.${ms.toString().padLeft(3, '0')}',
         style: pathwayGothicOne48,
       ),
       // Debug Buttons

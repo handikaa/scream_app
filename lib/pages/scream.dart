@@ -135,42 +135,48 @@ class ScreamPageState extends State<ScreamPage> {
         ],
       ),
       SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-      Stack(
-        children: [
-          Container(
-            height: MediaQuery.of(context).size.height * 0.238,
-            width: MediaQuery.of(context).size.width * 0.8,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/tv.png'),
-                fit: BoxFit.fitWidth,
-              ),
-            ),
-          ),
-          LimitedBox(
-            maxHeight: isReached
-                ? 0
-                : (MediaQuery.of(context).size.height * 0.238) -
-                    ((MediaQuery.of(context).size.height * 0.238) *
-                        (score == 0.0
-                            ? 0
-                            : score > minimumScore
-                                ? 1
-                                : score / minimumScore)),
-            maxWidth: MediaQuery.of(context).size.width * 0.8,
-            child: Container(
+      SizedBox(
+        height: MediaQuery.of(context).size.height * 0.238,
+        child: Stack(
+          children: [
+            Container(
               height: MediaQuery.of(context).size.height * 0.238,
               width: MediaQuery.of(context).size.width * 0.8,
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                    image: AssetImage('assets/images/tv.png'),
-                    fit: BoxFit.fitWidth,
-                    colorFilter:
-                        ColorFilter.mode(Colors.black, BlendMode.srcATop)),
+                  image: AssetImage('assets/images/tv_footer.png'),
+                  fit: BoxFit.fitWidth,
+                ),
               ),
             ),
-          ),
-        ],
+            Positioned(
+              top: -18,
+              child: LimitedBox(
+                maxHeight: isReached
+                    ? 0
+                    : (MediaQuery.of(context).size.height * 0.238) -
+                        ((MediaQuery.of(context).size.height * 0.238) *
+                            (score == 0.0
+                                ? 0
+                                : score > minimumScore
+                                    ? 1
+                                    : score / minimumScore)),
+                maxWidth: MediaQuery.of(context).size.width * 0.8,
+                child: Container(
+                  height: MediaQuery.of(context).size.height * 0.238,
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                        image: AssetImage('assets/images/tv.png'),
+                        fit: BoxFit.fitWidth,
+                        colorFilter:
+                            ColorFilter.mode(Colors.black, BlendMode.srcATop)),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       Text(
         '${((_current?.duration?.inMinutes ?? 0) % 60).toString().padLeft(2, '0')}:${((_current?.duration?.inSeconds ?? 0) % 60).toString().padLeft(2, '0')}.${ms.toString().padLeft(3, '0')}',

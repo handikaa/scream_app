@@ -30,7 +30,7 @@ class ScreamPageState extends State<ScreamPage> {
 
   AudioPlayer audioPlayer = AudioPlayer();
   double score = 0.0;
-  final minimumScore = 8000.0;
+  final minimumScore = 4800;
   final int stopInSeconds = 15;
   final CountDownController _controller = CountDownController();
   final int _duration = 5;
@@ -121,6 +121,7 @@ class ScreamPageState extends State<ScreamPage> {
   }
 
   List<Widget> get afterStart {
+    final itemHeight = MediaQuery.of(context).size.height * 0.238;
     return [
       const Column(
         children: [
@@ -136,11 +137,11 @@ class ScreamPageState extends State<ScreamPage> {
       ),
       SizedBox(height: MediaQuery.of(context).size.height * 0.1),
       SizedBox(
-        height: MediaQuery.of(context).size.height * 0.238,
+        height: itemHeight,
         child: Stack(
           children: [
             Container(
-              height: MediaQuery.of(context).size.height * 0.238,
+              height: itemHeight,
               width: MediaQuery.of(context).size.width * 0.8,
               decoration: const BoxDecoration(
                 image: DecorationImage(
@@ -150,28 +151,17 @@ class ScreamPageState extends State<ScreamPage> {
               ),
             ),
             Positioned(
-              top: -18,
-              child: LimitedBox(
-                maxHeight: isReached
-                    ? 0
-                    : (MediaQuery.of(context).size.height * 0.238) -
-                        ((MediaQuery.of(context).size.height * 0.238) *
-                            (score == 0.0
-                                ? 0
-                                : score > minimumScore
-                                    ? 1
-                                    : score / minimumScore)),
-                maxWidth: MediaQuery.of(context).size.width * 0.8,
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Center(
                 child: Container(
-                  height: MediaQuery.of(context).size.height * 0.238,
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                        image: AssetImage('assets/images/tv.png'),
-                        fit: BoxFit.fitWidth,
-                        colorFilter:
-                            ColorFilter.mode(Colors.black, BlendMode.srcATop)),
-                  ),
+                  color: Colors.black,
+                  width: MediaQuery.of(context).size.width * 0.8 - 22,
+                  height: isReached || score > minimumScore
+                      ? 0
+                      : (itemHeight - 26) -
+                          ((itemHeight - 26) * (score / minimumScore)),
                 ),
               ),
             ),

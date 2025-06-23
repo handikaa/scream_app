@@ -1,0 +1,2 @@
+/Users/bayufaturahman/Documents/scream_app/android/app/.cxx/Debug/4q3s1w14/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/bayufaturahman/Documents/scream_app/android/app/.cxx/Debug/4q3s1w14/armeabi-v7a/CMakeFiles/rebuild_cache.dir

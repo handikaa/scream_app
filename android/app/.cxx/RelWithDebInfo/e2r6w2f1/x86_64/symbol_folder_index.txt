@@ -1,0 +1,1 @@
+/Users/bayufaturahman/Documents/scream_app/android/app/build/intermediates/cxx/RelWithDebInfo/e2r6w2f1/obj/x86_64

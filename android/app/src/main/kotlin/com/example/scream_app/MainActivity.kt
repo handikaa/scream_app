@@ -1,4 +1,4 @@
-package com.example.scream_app
+package com.penainsigth.penainsight
 
 import io.flutter.embedding.android.FlutterActivity
 

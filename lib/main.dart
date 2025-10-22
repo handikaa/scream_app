@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:scream_app/pages/failed.dart';
-import 'package:scream_app/pages/result.dart';
-import 'package:scream_app/pages/scream.dart';
-import 'package:scream_app/pages/select_prize.dart';
-import 'package:scream_app/pages/start.dart';
-import 'package:scream_app/route_args.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
-void main() {
+import 'pages/failed.dart';
+import 'pages/login.dart';
+import 'pages/result.dart';
+import 'pages/scream.dart';
+import 'pages/select_prize.dart';
+import 'pages/start.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+
+  await Hive.initFlutter();
+
+  // buka box untuk menyimpan user
+  await Hive.openBox('usersBox');
   runApp(const MyApp());
 }
 
@@ -36,10 +43,17 @@ class _MyAppState extends State<MyApp> {
             return MaterialPageRoute(
               builder: (context) => const ScreamPage(),
             );
+          case '/login':
+            return MaterialPageRoute(
+              builder: (context) => const LoginPage(),
+            );
 
           case '/failed':
+            // final arg = settings.arguments as String;
             return MaterialPageRoute(
-              builder: (context) => const FailedPage(),
+              builder: (context) => FailedPage(
+                  // level: arg,
+                  ),
             );
 
           case '/select-prize':
@@ -48,13 +62,13 @@ class _MyAppState extends State<MyApp> {
             );
 
           case '/result':
-            final args = settings.arguments as ResultArgs;
+            // final args = settings.arguments as ResultArgs;
 
             return MaterialPageRoute(
               builder: (context) => ResultPage(
-                participantId: args.participantId,
-                seletedPrize: args.seletedPrize,
-              ),
+                  // participantId: args.participantId,
+                  // seletedPrize: args.seletedPrize,
+                  ),
             );
 
           default:

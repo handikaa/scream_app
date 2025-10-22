@@ -1,15 +1,16 @@
 import 'dart:async';
 import 'dart:io' as io;
-
 import 'package:another_audio_recorder/another_audio_recorder.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:circular_countdown_timer/circular_countdown_timer.dart';
 import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:scream_app/style.dart';
 import 'package:scream_app/widgets/layout.dart';
+import 'package:syncfusion_flutter_gauges/gauges.dart';
+
 // ignore: unused_import
 import 'package:scream_app/widgets/start_button.dart';
 
@@ -30,24 +31,142 @@ class ScreamPageState extends State<ScreamPage> {
 
   AudioPlayer audioPlayer = AudioPlayer();
   double score = 0.0;
-  final minimumScore = 4800;
+
+  final minimumScore = 3800;
   final int stopInSeconds = 15;
   final CountDownController _controller = CountDownController();
-  final int _duration = 5;
+
   bool isStarted = false;
   bool isReached = false;
+  bool isFinished = false;
+
   late Timer timer;
   int ms = 0;
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
+  int countdown = 5;
+  Timer? _countdownTimer;
 
   @override
   void initState() {
     super.initState();
     _init();
+    _startCountdown();
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    timer.cancel();
+    super.dispose();
+  }
+
+  // 🔹 Countdown sebelum mulai scream
+  void _startCountdown() {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      if (countdown == 1) {
+        timer.cancel();
+        setState(() {
+          isStarted = true;
+        });
+        await _start(); // 🔥 otomatis mulai merekam saat countdown habis
+      } else {
+        setState(() {
+          countdown--;
+        });
+      }
+    });
+  }
+
+  // 🔹 Setup recorder
+  Future<void> _init() async {
+    try {
+      if (await AnotherAudioRecorder.hasPermissions) {
+        String customPath = '/another_audio_recorder_';
+        io.Directory appDocDirectory = io.Platform.isIOS
+            ? await getApplicationDocumentsDirectory()
+            : (await getExternalStorageDirectory())!;
+
+        customPath =
+            '${appDocDirectory.path}$customPath${DateTime.now().millisecondsSinceEpoch}';
+        _recorder =
+            AnotherAudioRecorder(customPath, audioFormat: AudioFormat.WAV);
+
+        await _recorder?.initialized;
+        var current = await _recorder?.current(channel: 0);
+        setState(() {
+          _current = current;
+          _currentStatus = current!.status!;
+          isReached = false;
+        });
+        _controller.start();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("You must accept permissions")));
+      }
+    } catch (e) {
+      debugPrint('Error init recorder: $e');
+    }
+  }
+
+  // 🔹 Mulai mendeteksi suara (scream)
+  Future<void> _start() async {
+    try {
+      await _recorder?.start();
+      var recording = await _recorder?.current(channel: 0);
+      setState(() => _current = recording);
+
+      const tick = Duration(milliseconds: 50);
+
+      Timer.periodic(tick, (Timer t) async {
+        if (_currentStatus == RecordingStatus.Stopped) {
+          t.cancel();
+          return;
+        }
+
+        var current = await _recorder?.current(channel: 0);
+        final peak = current?.metering?.peakPower ?? -60;
+        ms += tick.inMilliseconds;
+
+        // 🔊 Hitung skor berdasarkan volume
+        setState(() {
+          if (peak > -20) {
+            double temp = (peak.abs() - 20);
+            score += temp.abs() * 2; // tambah multiplier biar terasa naik cepat
+          }
+          if (score >= minimumScore) {
+            isReached = true;
+            _stop(success: true);
+          }
+          _current = current;
+          _currentStatus = current?.status ?? RecordingStatus.Unset;
+        });
+      });
+
+      // 🔹 Auto stop setelah 15 detik
+      timer = Timer(Duration(seconds: stopInSeconds),
+          () => _stop(success: score >= minimumScore));
+    } catch (e) {
+      debugPrint('Error start recording: $e');
+    }
+  }
+
+  // 🔹 Hentikan scream & arahkan ke page selanjutnya
+  Future<void> _stop({required bool success}) async {
+    try {
+      await _recorder?.stop();
+      timer.cancel();
+      setState(() => isFinished = true);
+
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (success) {
+          Navigator.pushReplacementNamed(context, '/result');
+        } else {
+          Navigator.pushReplacementNamed(context, '/failed');
+        }
+      });
+    } catch (e) {
+      debugPrint('Error stop recording: $e');
+    }
   }
 
   @override
@@ -60,41 +179,97 @@ class ScreamPageState extends State<ScreamPage> {
 
   List<Widget> get beforeStart {
     return [
-      CircularCountDownTimer(
-        duration: _duration,
-        initialDuration: 0,
-        controller: _controller,
-        width: MediaQuery.of(context).size.width / 2.5,
-        height: MediaQuery.of(context).size.height / 2.5,
-        ringColor: Colors.transparent,
-        fillColor: Colors.black,
-        backgroundColor: Colors.transparent,
-        strokeWidth: 10.0,
-        strokeCap: StrokeCap.round,
-        textStyle: pathwayGothicOne48,
-        textFormat: CountdownTextFormat.S,
-        isReverse: true,
-        isReverseAnimation: true,
-        isTimerTextShown: true,
-        onComplete: () {
-          setState(() {
-            isStarted = true;
-          });
-          _start();
-        },
-        timeFormatterFunction: (defaultFormatterFunction, duration) {
-          if (duration.inSeconds == 0) return 'BERSIAP!';
-          return Function.apply(defaultFormatterFunction, [duration]);
-        },
+      Image.asset(
+        'assets/images/logo-clw.png',
+        width: 150,
+        height: 150,
       ),
-      const Text(
-        'SEKUAT APA SUARAMU',
-        style: passionOne32,
+      SizedBox(
+        height: MediaQuery.of(context).size.height * 0.04,
       ),
-      const Text(
-        'UNTUK NYALAKAN TV!',
-        style: passionOne32,
+      Image.asset(
+        'assets/images/wait.png',
+        width: 50,
+        height: 50,
       ),
+      SizedBox(
+        height: MediaQuery.of(context).size.height * 0.1,
+      ),
+      Container(
+        padding: EdgeInsets.only(top: 70),
+        width: 250,
+        height: 250,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+              image: AssetImage(
+                'assets/images/paw.png',
+              ),
+              fit: BoxFit.contain),
+        ),
+        child: Center(
+          child: Stack(
+            children: [
+              Text(
+                '$countdown',
+                style: TextStyle(
+                    fontFamily: 'Cookie Crumble',
+                    fontSize: 60,
+                    fontWeight: FontWeight.w700,
+                    foreground: Paint()
+                      ..style = PaintingStyle.stroke
+                      ..strokeWidth = 5
+                      ..color = Colors.white),
+              ),
+              Text(
+                '$countdown',
+                style: TextStyle(
+                  fontFamily: 'Cookie Crumble',
+                  fontSize: 60,
+                  fontWeight: FontWeight.w700,
+                  color: Color(
+                    0xff9956A3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      )
+      // CircularCountDownTimer(
+      //   duration: _duration,
+      //   initialDuration: 0,
+      //   controller: _controller,
+      //   width: MediaQuery.of(context).size.width / 2.5,
+      //   height: MediaQuery.of(context).size.height / 2.5,
+      //   ringColor: Colors.transparent,
+      //   fillColor: Colors.black,
+      //   backgroundColor: Colors.transparent,
+      //   strokeWidth: 10.0,
+      //   strokeCap: StrokeCap.round,
+      //   textStyle: pathwayGothicOne48,
+      //   textFormat: CountdownTextFormat.S,
+      //   isReverse: true,
+      //   isReverseAnimation: true,
+      //   isTimerTextShown: true,
+      //   onComplete: () {
+      //     setState(() {
+      //       isStarted = true;
+      //     });
+      //     _start();
+      //   },
+      //   timeFormatterFunction: (defaultFormatterFunction, duration) {
+      //     if (duration.inSeconds == 0) return 'BERSIAP!';
+      //     return Function.apply(defaultFormatterFunction, [duration]);
+      //   },
+      // ),
+      // const Text(
+      //   'SEKUAT APA SUARAMU',
+      //   style: passionOne32,
+      // ),
+      // const Text(
+      //   'UNTUK NYALAKAN TV!',
+      //   style: passionOne32,
+      // ),
 
       // Debug Buttons
       // Row(
@@ -122,56 +297,268 @@ class ScreamPageState extends State<ScreamPage> {
 
   List<Widget> get afterStart {
     final itemHeight = MediaQuery.of(context).size.height * 0.238;
+
+    final double percent = (score / minimumScore).clamp(0.0, 1.0);
+    final int displayedScore = (percent * 100).round();
     return [
-      const Column(
-        children: [
-          Text(
-            'MULAI TERIAK',
-            style: passionOne32,
-          ),
-          Text(
-            'UNTUK MENYALAKAN TV!',
-            style: passionOne32,
-          ),
-        ],
+      Image.asset(
+        'assets/images/logo-clw.png',
+        width: 150,
+        height: 150,
       ),
-      SizedBox(height: MediaQuery.of(context).size.height * 0.1),
       SizedBox(
-        height: itemHeight,
+        height: MediaQuery.of(context).size.height * 0.04,
+      ),
+      Image.asset(
+        'assets/images/scream-clw.png',
+        width: 50,
+        height: 50,
+      ),
+      SizedBox(
+        height: MediaQuery.of(context).size.height * 0.1,
+      ),
+      // Ganti bagian AnimatedOpacity dengan ini:
+      SizedBox(
+        width: 250,
+        height: 250,
         child: Stack(
+          alignment: Alignment.bottomCenter,
           children: [
-            Container(
-              height: itemHeight,
-              width: MediaQuery.of(context).size.width * 0.8,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/images/tv_footer.png'),
-                  fit: BoxFit.fitWidth,
-                ),
+            // 🔹 Background Paw (kosong, misal abu-abu samar jika mau)
+            Opacity(
+              opacity: 0.2,
+              child: Image.asset(
+                'assets/images/paw.png',
+                width: 250,
+                height: 250,
+                fit: BoxFit.contain,
               ),
             ),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  color: Colors.black,
-                  width: MediaQuery.of(context).size.width * 0.8 - 22,
-                  height: isReached || score > minimumScore
-                      ? 0
-                      : (itemHeight - 26) -
-                          ((itemHeight - 26) * (score / minimumScore)),
+
+            ClipRect(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                heightFactor: (score / minimumScore).clamp(0.0, 1.0),
+                child: Image.asset(
+                  'assets/images/paw.png',
+                  width: 250,
+                  height: 250,
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
           ],
         ),
       ),
-      Text(
-        '${((_current?.duration?.inMinutes ?? 0) % 60).toString().padLeft(2, '0')}:${((_current?.duration?.inSeconds ?? 0) % 60).toString().padLeft(2, '0')}.${ms.toString().padLeft(3, '0')}',
-        style: pathwayGothicOne48,
+
+      SizedBox(
+        height: MediaQuery.of(context).size.height * 0.01,
       ),
+      Column(
+        children: [
+          Stack(
+            children: [
+              Text(
+                '$displayedScore/100',
+                style: TextStyle(
+                    fontFamily: 'Cookie Crumble',
+                    fontSize: 40,
+                    fontWeight: FontWeight.w700,
+                    foreground: Paint()
+                      ..style = PaintingStyle.stroke
+                      ..strokeWidth = 3
+                      ..color = Colors.white),
+              ),
+              Text(
+                '$displayedScore/100',
+                style: const TextStyle(
+                  fontFamily: 'Cookie Crumble',
+                  fontSize: 40,
+                  fontWeight: FontWeight.w700,
+                  color: Color(
+                    0xff9956A3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      SizedBox(
+        height: MediaQuery.of(context).size.height * 0.05,
+      ),
+      Column(
+        children: [
+          Stack(
+            children: [
+              Text(
+                '${((_current?.duration?.inMinutes ?? 0) % 60).toString().padLeft(2, '0')}:${((_current?.duration?.inSeconds ?? 0) % 60).toString().padLeft(2, '0')}.${ms.toString().padLeft(3, '0')}',
+                style: TextStyle(
+                    fontFamily: 'Cookie Crumble',
+                    fontSize: 60,
+                    fontWeight: FontWeight.w700,
+                    foreground: Paint()
+                      ..style = PaintingStyle.stroke
+                      ..strokeWidth = 5
+                      ..color = Colors.white),
+              ),
+              Text(
+                '${((_current?.duration?.inMinutes ?? 0) % 60).toString().padLeft(2, '0')}:${((_current?.duration?.inSeconds ?? 0) % 60).toString().padLeft(2, '0')}.${ms.toString().padLeft(3, '0')}',
+                style: const TextStyle(
+                  fontFamily: 'Cookie Crumble',
+                  fontSize: 60,
+                  fontWeight: FontWeight.w700,
+                  color: Color(
+                    0xff9956A3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+
+      // const Column(
+      //   children: [
+      //     Text(
+      //       'MULAI TERIAK',
+      //       style: passionOne32,
+      //     ),
+      //     Text(
+      //       'UNTUK MENYALAKAN TV!',
+      //       style: passionOne32,
+      //     ),
+      //   ],
+      // ),
+      // SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+
+      // SizedBox(
+      //   height: itemHeight,
+      //   child: SfRadialGauge(
+      //     enableLoadingAnimation: true,
+      //     animationDuration: 500,
+      //     axes: <RadialAxis>[
+      //       RadialAxis(
+      //         minimum: 0,
+      //         maximum: minimumScore.toDouble(),
+      //         showTicks: false,
+      //         showLabels: false,
+      //         axisLineStyle: const AxisLineStyle(
+      //           thickness: 20,
+      //         ),
+      //         ranges: <GaugeRange>[
+      //           /// Level 0
+      //           GaugeRange(
+      //             startValue: 0,
+      //             endValue: minimumScore * 0.01,
+      //             color: Colors.grey,
+      //             // label: 'Level 0',
+      //             sizeUnit: GaugeSizeUnit.factor,
+      //             startWidth: 0.5,
+      //             endWidth: 0.5,
+      //             labelStyle: const GaugeTextStyle(
+      //               fontSize: 12,
+      //               color: Colors.white,
+      //             ),
+      //           ),
+
+      //           /// Level 1
+      //           GaugeRange(
+      //             startValue: minimumScore * 0.01,
+      //             endValue: minimumScore * 0.35,
+      //             color: Colors.green,
+      //             label: 'Level 1',
+      //             sizeUnit: GaugeSizeUnit.factor,
+      //             startWidth: 0.5,
+      //             endWidth: 0.5,
+      //             labelStyle: const GaugeTextStyle(
+      //               fontSize: 12,
+      //               color: Colors.white,
+      //             ),
+      //           ),
+
+      //           /// Level 2
+      //           GaugeRange(
+      //             startValue: minimumScore * 0.35,
+      //             endValue: minimumScore * 0.7,
+      //             color: Colors.orange,
+      //             label: 'Level 2',
+      //             sizeUnit: GaugeSizeUnit.factor,
+      //             startWidth: 0.5,
+      //             endWidth: 0.5,
+      //             labelStyle: const GaugeTextStyle(
+      //               fontSize: 12,
+      //               color: Colors.white,
+      //             ),
+      //           ),
+
+      //           /// Level 3
+      //           GaugeRange(
+      //             startValue: minimumScore * 0.7,
+      //             endValue: minimumScore.toDouble(),
+      //             color: Colors.red,
+      //             label: 'Level 3',
+      //             sizeUnit: GaugeSizeUnit.factor,
+      //             startWidth: 0.5,
+      //             endWidth: 0.5,
+      //             labelStyle: const GaugeTextStyle(
+      //               fontSize: 12,
+      //               color: Colors.white,
+      //             ),
+      //           ),
+      //         ],
+      //         pointers: <GaugePointer>[
+      //           NeedlePointer(
+      //             value: score > minimumScore ? minimumScore.toDouble() : score,
+      //             needleColor: Colors.black,
+      //             knobStyle: const KnobStyle(
+      //               color: Colors.black,
+      //               knobRadius: 0.06,
+      //             ),
+      //           ),
+      //         ],
+      //       ),
+      //     ],
+      //   ),
+      // )
+
+      // SizedBox(
+      //   height: itemHeight,
+      //   child: Stack(
+      //     children: [
+      //       Container(
+      //         height: itemHeight,
+      //         width: MediaQuery.of(context).size.width * 0.8,
+      //         decoration: const BoxDecoration(
+      //           image: DecorationImage(
+      //             image: AssetImage('assets/images/tv_footer.png'),
+      //             fit: BoxFit.fitWidth,
+      //           ),
+      //         ),
+      //       ),
+      //       Positioned(
+      //         top: 0,
+      //         left: 0,
+      //         right: 0,
+      //         child: Center(
+      //           child: Container(
+      //             color: Colors.black,
+      //             width: MediaQuery.of(context).size.width * 0.8 - 22,
+      //             height: isReached || score > minimumScore
+      //                 ? 0
+      //                 : (itemHeight - 26) -
+      //                     ((itemHeight - 26) * (score / minimumScore)),
+      //           ),
+      //         ),
+      //       ),
+      //     ],
+      //   ),
+      // ),
+
+      // Text(
+      //   '${((_current?.duration?.inMinutes ?? 0) % 60).toString().padLeft(2, '0')}:${((_current?.duration?.inSeconds ?? 0) % 60).toString().padLeft(2, '0')}.${ms.toString().padLeft(3, '0')}',
+      //   style: pathwayGothicOne48,
+      // ),
       // Debug Buttons
       // Row(
       //   mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -200,106 +587,150 @@ class ScreamPageState extends State<ScreamPage> {
     ];
   }
 
-  _init() async {
-    try {
-      if (await AnotherAudioRecorder.hasPermissions) {
-        String customPath = '/another_audio_recorder_';
-        io.Directory appDocDirectory;
-        if (io.Platform.isIOS) {
-          appDocDirectory = await getApplicationDocumentsDirectory();
-        } else {
-          appDocDirectory = (await getExternalStorageDirectory())!;
-        }
+  // _init() async {
+  //   try {
+  //     if (await AnotherAudioRecorder.hasPermissions) {
+  //       String customPath = '/another_audio_recorder_';
+  //       io.Directory appDocDirectory;
+  //       if (io.Platform.isIOS) {
+  //         appDocDirectory = await getApplicationDocumentsDirectory();
+  //       } else {
+  //         appDocDirectory = (await getExternalStorageDirectory())!;
+  //       }
 
-        customPath = appDocDirectory.path +
-            customPath +
-            DateTime.now().millisecondsSinceEpoch.toString();
+  //       customPath = appDocDirectory.path +
+  //           customPath +
+  //           DateTime.now().millisecondsSinceEpoch.toString();
 
-        _recorder =
-            AnotherAudioRecorder(customPath, audioFormat: AudioFormat.WAV);
+  //       _recorder =
+  //           AnotherAudioRecorder(customPath, audioFormat: AudioFormat.WAV);
 
-        await _recorder?.initialized;
-        var current = await _recorder?.current(channel: 0);
+  //       await _recorder?.initialized;
+  //       var current = await _recorder?.current(channel: 0);
 
-        setState(() {
-          isReached = false;
-          _current = current;
-          _currentStatus = current!.status!;
-        });
+  //       setState(() {
+  //         isReached = false;
+  //         _current = current;
+  //         _currentStatus = current!.status!;
+  //       });
 
-        _controller.start();
-      } else {
-        return const SnackBar(content: Text("You must accept permissions"));
-      }
-    } catch (e) {
-      debugPrint('Error: $e');
+  //       _controller.start();
+  //     } else {
+  //       return const SnackBar(content: Text("You must accept permissions"));
+  //     }
+  //   } catch (e) {
+  //     debugPrint('Error: $e');
+  //   }
+  // }
+
+  int _getLevel(double score, int minimumScore) {
+    const epsilon = 100.1;
+
+    if (score >= 0 && score < minimumScore * 0.01) {
+      return 0; // Level 0
+    } else if (score >= minimumScore * 0.01 && score < minimumScore * 0.35) {
+      return 1; // Level 1
+    } else if (score >= minimumScore * 0.35 && score < minimumScore * 0.7) {
+      return 2; // Level 2
+    } else if (score >= minimumScore * 0.7 && score <= minimumScore + epsilon) {
+      return 3; // Level 3
+    } else {
+      return -1; // di luar range (opsional untuk handle error)
     }
   }
 
-  _start() async {
-    try {
-      await _recorder?.start();
-      score = 0.0;
-      var recording = await _recorder?.current(channel: 0);
-      setState(() {
-        _current = recording;
-      });
-      const tick = Duration(milliseconds: 24);
-      Timer.periodic(tick, (Timer t) async {
-        if (_currentStatus == RecordingStatus.Stopped) {
-          t.cancel();
-        }
+  // _start() async {
+  //   try {
+  //     await _recorder?.start();
+  //     // score = 0.0;
+  //     var recording = await _recorder?.current(channel: 0);
+  //     setState(() {
+  //       _current = recording;
+  //     });
+  //     const tick = Duration(milliseconds: 24);
+  //     Timer.periodic(tick, (Timer t) async {
+  //       if (_currentStatus == RecordingStatus.Stopped) {
+  //         t.cancel();
+  //       }
 
-        var current = await _recorder?.current(channel: 0);
-        final peak = current!.metering!.peakPower!;
-        // print(current.status);
-        ms += tick.inMilliseconds;
-        setState(() {
-          ms = ms % 1000;
-          if (score >= minimumScore) {
-            isReached = true;
-          }
-          if (peak > -20) {
-            double temp = (peak.abs() - 20);
-            score += temp.abs();
-          }
-          _currentStatus = _current!.status!;
-        });
+  //       var current = await _recorder?.current(channel: 0);
+  //       final peak = current!.metering!.peakPower!;
+  //       // print(current.status);
+  //       ms += tick.inMilliseconds;
+  //       setState(() {
+  //         ms = ms % 1000;
+  //         if (score >= minimumScore) {
+  //           isReached = true;
+  //         }
+  //         if (peak > -20) {
+  //           double temp = (peak.abs() - 20);
+  //           score += temp.abs();
+  //         }
+  //         _currentStatus = _current!.status!;
+  //       });
 
-        if (isReached) {
-          t.cancel();
-          _stop();
-        }
-      });
+  //       if (isReached) {
+  //         t.cancel();
+  //         _stop();
+  //       }
+  //     });
 
-      timer = Timer(Duration(seconds: stopInSeconds), _stop);
-    } catch (e) {
-      debugPrint('Error: $e');
-    }
-  }
+  //     timer = Timer(Duration(seconds: stopInSeconds), _stop);
+  //   } catch (e) {
+  //     debugPrint('Error: $e');
+  //   }
+  // }
 
-  _stop() async {
-    debugPrint('stop called');
-    if (_currentStatus == RecordingStatus.Recording) {
-      var result = await _recorder?.stop();
-      timer.cancel();
+  // _stop() async {
+  //   debugPrint('stop called');
+  //   if (_currentStatus == RecordingStatus.Recording) {
+  //     var result = await _recorder?.stop();
+  //     timer.cancel();
 
-      File file = widget.localFileSystem.file(result?.path);
-      file.deleteSync();
-      setState(() {
-        _current = result;
-        _currentStatus = _current!.status!;
-      });
-    }
-    if (isReached && mounted) {
-      // ignore: use_build_context_synchronously
-      Navigator.pushNamed(context, '/select-prize');
-    }
-    if (!isReached && mounted) {
-      // ignore: use_build_context_synchronously
-      Navigator.pushNamed(context, '/failed');
-    }
-  }
+  //     File file = widget.localFileSystem.file(result?.path);
+  //     file.deleteSync();
+  //     setState(() {
+  //       _current = result;
+  //       _currentStatus = _current!.status!;
+  //     });
+  //   }
+
+  //   // ✅ Hitung level berdasarkan score
+  //   int level = _getLevel(score, minimumScore);
+
+  //   if (mounted) {
+  //     if (level == 3) {
+  //       // ✅ Level akhir → langsung ke halaman result
+  //       Navigator.pushNamed(context, '/failed', arguments: level.toString());
+  //     } else {
+  //       // ✅ Level tertentu → tetap lewat tapi bukan gagal
+  //       Navigator.pushNamed(context, '/failed', arguments: level.toString());
+  //     }
+  //   }
+  // }
+
+  // _stop() async {
+  //   debugPrint('stop called');
+  //   if (_currentStatus == RecordingStatus.Recording) {
+  //     var result = await _recorder?.stop();
+  //     timer.cancel();
+
+  //     File file = widget.localFileSystem.file(result?.path);
+  //     file.deleteSync();
+  //     setState(() {
+  //       _current = result;
+  //       _currentStatus = _current!.status!;
+  //     });
+  //   }
+  //   if (isReached && mounted) {
+  //     // ignore: use_build_context_synchronously
+  //     Navigator.pushNamed(context, '/select-prize');
+  //   }
+  //   if (!isReached && mounted) {
+  //     // ignore: use_build_context_synchronously
+  //     Navigator.pushNamed(context, '/failed', arguments: '0');
+  //   }
+  // }
 
   void onPlayAudio() async {
     if (audioPlayer.state != PlayerState.playing) {

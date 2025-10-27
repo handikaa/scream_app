@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:scream_app/pages/select_level.dart';
+import 'package:scream_app/pages/set_value.dart';
 
 import 'pages/failed.dart';
 import 'pages/login.dart';
@@ -15,8 +17,9 @@ void main() async {
 
   await Hive.initFlutter();
 
-  // buka box untuk menyimpan user
   await Hive.openBox('usersBox');
+  await Hive.openBox<Map>('levelBox');
+
   runApp(const MyApp());
 }
 
@@ -49,16 +52,24 @@ class _MyAppState extends State<MyApp> {
             );
 
           case '/failed':
-            // final arg = settings.arguments as String;
-            return MaterialPageRoute(
-              builder: (context) => FailedPage(
-                  // level: arg,
-                  ),
-            );
+            final arg = settings.arguments as int;
+            return MaterialPageRoute(builder: (context) {
+              return FailedPage(
+                score: arg,
+              );
+            });
 
           case '/select-prize':
             return MaterialPageRoute(
               builder: (context) => const SelectPrizePage(),
+            );
+          case '/select-level':
+            return MaterialPageRoute(
+              builder: (context) => const SelectLevelPage(),
+            );
+          case '/set-value':
+            return MaterialPageRoute(
+              builder: (context) => const SetValuePage(),
             );
 
           case '/result':

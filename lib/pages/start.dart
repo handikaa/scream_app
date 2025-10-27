@@ -1,13 +1,47 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:scream_app/widgets/loading_overlay.dart';
 
 import '../widgets/layout.dart';
 
-class StartPage extends StatelessWidget {
+class StartPage extends StatefulWidget {
   const StartPage({super.key});
+
+  @override
+  State<StartPage> createState() => _StartPageState();
+}
+
+class _StartPageState extends State<StartPage> {
+  int _tapCount = 0;
+  Timer? _resetTimer;
+
+  void _onLogoTap() {
+    _tapCount++;
+
+    _resetTimer?.cancel();
+    _resetTimer = Timer(const Duration(seconds: 1), () {
+      _tapCount = 0;
+    });
+
+    if (_tapCount == 3) {
+      _resetTimer?.cancel();
+      _tapCount = 0;
+
+      Navigator.pushNamed(context, '/set-value');
+    }
+  }
+
+  @override
+  void dispose() {
+    _resetTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Layout(
+      bg: 'assets/images/bg-clw-1.png',
       // decorations: [
       //   // Positioned(
       //   //   bottom: 0,
@@ -20,17 +54,55 @@ class StartPage extends StatelessWidget {
       //   // )
       // ],
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/images/logo-clw.png',
-              width: 200,
-              height: 200,
+        InkWell(
+          onTap: () => Navigator.pushNamed(context, '/select-level'),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Image.asset(
+                  'assets/images/settings.png',
+                  width: 30,
+                  height: 30,
+                ),
+              ],
             ),
-          ],
+          ),
+        ),
+        GestureDetector(
+          onTap: () => _onLogoTap(),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/images/logo-clw.png',
+                width: 100,
+                height: 100,
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.02,
+        ),
+        Image.asset(
+          'assets/images/come-clw.png',
+          width: 140,
+          height: 140,
+        ),
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.04,
+        ),
+        Image.asset(
+          'assets/images/bark-clw.png',
+          width: 40,
+          height: 40,
         ),
 
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.04,
+        ),
         // const Text(
         //   'SEKUAT APA SUARAMU',
         //   style: passionOne32,
@@ -39,34 +111,6 @@ class StartPage extends StatelessWidget {
         //   'UNTUK NYALAKAN TV!',
         //   style: passionOne32,
         // ),
-        SizedBox(
-          height: MediaQuery.of(context).size.height * 0.02,
-        ),
-
-        const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'WELCOME TO',
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(
-          height: MediaQuery.of(context).size.height * 0.1,
-        ),
-        Image.asset(
-          'assets/images/teks-clw.png',
-          width: 50,
-          height: 50,
-        ),
-
-        SizedBox(
-          height: MediaQuery.of(context).size.height * 0.1,
-        ),
 
         InkWell(
           onTap: () async {

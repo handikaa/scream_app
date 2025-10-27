@@ -5,14 +5,18 @@ import 'package:circular_countdown_timer/circular_countdown_timer.dart';
 import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:scream_app/style.dart';
 import 'package:scream_app/widgets/layout.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 // ignore: unused_import
 import 'package:scream_app/widgets/start_button.dart';
+
+import '../data/local_shared.dart';
 
 class ScreamPage extends StatefulWidget {
   final LocalFileSystem localFileSystem;
@@ -32,7 +36,7 @@ class ScreamPageState extends State<ScreamPage> {
   AudioPlayer audioPlayer = AudioPlayer();
   double score = 0.0;
 
-  final minimumScore = 3800;
+  int minimumScore = 1800;
   final int stopInSeconds = 15;
   final CountDownController _controller = CountDownController();
 
@@ -44,13 +48,60 @@ class ScreamPageState extends State<ScreamPage> {
   int ms = 0;
 
   int countdown = 5;
+  Timer? _tickTimer;
+  Timer? _autoStopTimer;
   Timer? _countdownTimer;
 
   @override
   void initState() {
     super.initState();
+    _loadLevelFromLocal();
     _init();
     _startCountdown();
+  }
+
+  Future<void> _loadLevelFromLocal() async {
+    try {
+      final level = await LocalStorageHelper.getLevel();
+
+      final levelBox = Hive.box<Map>('levelBox');
+      final data = levelBox.get('levels');
+
+      int defaultEasy = 2800;
+      int defaultMed = 3800;
+      int defaultHard = 4800;
+      int newScore = defaultEasy;
+
+      if (data == null || data.isEmpty) {
+        if (level == 'easy') {
+          newScore = defaultEasy;
+        } else if (level == 'med') {
+          newScore = defaultMed;
+        } else if (level == 'hard') {
+          newScore = defaultHard;
+        }
+      } else {
+        if (data.containsKey(level)) {
+          newScore = data[level] is int
+              ? data[level]
+              : int.tryParse('${data[level]}') ?? defaultEasy;
+        } else {
+          if (level == 'easy') newScore = defaultEasy;
+          if (level == 'med') newScore = defaultMed;
+          if (level == 'hard') newScore = defaultHard;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          minimumScore = newScore;
+        });
+      }
+
+      debugPrint('🎯 Level aktif: $level | Minimum score: $newScore');
+    } catch (e, s) {
+      debugPrint('❌ Gagal memuat level dari local: $e\n$s');
+    }
   }
 
   @override
@@ -60,7 +111,6 @@ class ScreamPageState extends State<ScreamPage> {
     super.dispose();
   }
 
-  // 🔹 Countdown sebelum mulai scream
   void _startCountdown() {
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (countdown == 1) {
@@ -77,7 +127,24 @@ class ScreamPageState extends State<ScreamPage> {
     });
   }
 
-  // 🔹 Setup recorder
+  Future<void> _disposeRecorder() async {
+    try {
+      // Hentikan semua timer aktif
+      _tickTimer?.cancel();
+      _autoStopTimer?.cancel();
+
+      // Stop recorder jika masih merekam
+      if (_currentStatus == RecordingStatus.Recording) {
+        await _recorder?.stop();
+      }
+
+      _recorder = null;
+      debugPrint('🛑 Recorder & timer disposed.');
+    } catch (e) {
+      debugPrint('⚠️ Error saat dispose recorder: $e');
+    }
+  }
+
   Future<void> _init() async {
     try {
       if (await AnotherAudioRecorder.hasPermissions) {
@@ -101,14 +168,56 @@ class ScreamPageState extends State<ScreamPage> {
         _controller.start();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("You must accept permissions")));
+          const SnackBar(content: Text("You must accept permissions")),
+        );
       }
     } catch (e) {
       debugPrint('Error init recorder: $e');
     }
   }
 
-  // 🔹 Mulai mendeteksi suara (scream)
+  // Future<void> _start() async {
+  //   try {
+  //     await _recorder?.start();
+  //     var recording = await _recorder?.current(channel: 0);
+  //     setState(() => _current = recording);
+
+  //     const tick = Duration(milliseconds: 50);
+
+  //     // Timer pembacaan audio
+  //     _tickTimer = Timer.periodic(tick, (Timer t) async {
+  //       if (_currentStatus == RecordingStatus.Stopped) {
+  //         t.cancel();
+  //         return;
+  //       }
+
+  //       var current = await _recorder?.current(channel: 0);
+  //       final peak = current?.metering?.peakPower ?? -60;
+  //       ms += tick.inMilliseconds;
+
+  //       setState(() {
+  //         if (peak > -20) {
+  //           double temp = (peak.abs() - 20);
+  //           score += temp.abs() * 2;
+  //         }
+  //         if (score >= minimumScore) {
+  //           isReached = true;
+  //           _stop(success: true);
+  //         }
+  //         _current = current;
+  //         _currentStatus = current?.status ?? RecordingStatus.Unset;
+  //       });
+  //     });
+
+  //     // Auto stop setelah durasi tertentu
+  //     _autoStopTimer = Timer(Duration(seconds: stopInSeconds), () {
+  //       _stop(success: score >= minimumScore);
+  //     });
+  //   } catch (e) {
+  //     debugPrint('Error start recording: $e');
+  //   }
+  // }
+
   Future<void> _start() async {
     try {
       await _recorder?.start();
@@ -150,8 +259,34 @@ class ScreamPageState extends State<ScreamPage> {
     }
   }
 
-  // 🔹 Hentikan scream & arahkan ke page selanjutnya
+  // Future<void> _stop({required bool success}) async {
+  //   final double percent = (score / minimumScore).clamp(0.0, 1.0);
+  //   final int displayedScore = (percent * 100).round();
+
+  //   try {
+  //     await _recorder?.stop();
+  //     _tickTimer?.cancel();
+  //     _autoStopTimer?.cancel();
+  //     setState(() => isFinished = true);
+
+  //     // ✅ Tidak langsung dispose di sini agar animasi bisa selesai
+  //     Future.delayed(const Duration(milliseconds: 800), () {
+  //       if (!mounted) return;
+  //       Navigator.pushReplacementNamed(
+  //         context,
+  //         success ? '/result' : '/failed',
+  //         arguments: displayedScore,
+  //       );
+  //     });
+  //   } catch (e) {
+  //     debugPrint('Error stop recording: $e');
+  //   }
+  // }
+
   Future<void> _stop({required bool success}) async {
+    final double percent = (score / minimumScore).clamp(0.0, 1.0);
+    final int displayedScore = (percent * 100).round();
+
     try {
       await _recorder?.stop();
       timer.cancel();
@@ -161,7 +296,8 @@ class ScreamPageState extends State<ScreamPage> {
         if (success) {
           Navigator.pushReplacementNamed(context, '/result');
         } else {
-          Navigator.pushReplacementNamed(context, '/failed');
+          Navigator.pushReplacementNamed(context, '/failed',
+              arguments: displayedScore);
         }
       });
     } catch (e) {
@@ -222,7 +358,7 @@ class ScreamPageState extends State<ScreamPage> {
               ),
               Text(
                 '$countdown',
-                style: TextStyle(
+                style: const TextStyle(
                   fontFamily: 'Cookie Crumble',
                   fontSize: 60,
                   fontWeight: FontWeight.w700,
@@ -623,21 +759,21 @@ class ScreamPageState extends State<ScreamPage> {
   //   }
   // }
 
-  int _getLevel(double score, int minimumScore) {
-    const epsilon = 100.1;
+  // int _getLevel(double score, int minimumScore) {
+  //   const epsilon = 100.1;
 
-    if (score >= 0 && score < minimumScore * 0.01) {
-      return 0; // Level 0
-    } else if (score >= minimumScore * 0.01 && score < minimumScore * 0.35) {
-      return 1; // Level 1
-    } else if (score >= minimumScore * 0.35 && score < minimumScore * 0.7) {
-      return 2; // Level 2
-    } else if (score >= minimumScore * 0.7 && score <= minimumScore + epsilon) {
-      return 3; // Level 3
-    } else {
-      return -1; // di luar range (opsional untuk handle error)
-    }
-  }
+  //   if (score >= 0 && score < minimumScore * 0.01) {
+  //     return 0; // Level 0
+  //   } else if (score >= minimumScore * 0.01 && score < minimumScore * 0.35) {
+  //     return 1; // Level 1
+  //   } else if (score >= minimumScore * 0.35 && score < minimumScore * 0.7) {
+  //     return 2; // Level 2
+  //   } else if (score >= minimumScore * 0.7 && score <= minimumScore + epsilon) {
+  //     return 3; // Level 3
+  //   } else {
+  //     return -1; // di luar range (opsional untuk handle error)
+  //   }
+  // }
 
   // _start() async {
   //   try {

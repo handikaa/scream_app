@@ -5,6 +5,7 @@ class Layout extends StatelessWidget {
   final List<Widget> children;
   final Color backgroundColorFilter;
   final bool lightLogo;
+  final String bg;
   final Widget? bottomNavigationBar;
   const Layout({
     super.key,
@@ -13,6 +14,7 @@ class Layout extends StatelessWidget {
     this.backgroundColorFilter = Colors.white,
     this.lightLogo = false,
     this.bottomNavigationBar,
+    this.bg = 'assets/images/bg-clw.png',
   });
 
   @override
@@ -22,14 +24,14 @@ class Layout extends StatelessWidget {
       bottomNavigationBar: bottomNavigationBar,
       body: Stack(
         children: [
-          // Container(
-          //   decoration: const BoxDecoration(
-          //     image: DecorationImage(
-          //       image: AssetImage('assets/images/background-sharp.png'),
-          //       fit: BoxFit.cover,
-          //     ),
-          //   ),
-          // ),
+          Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage(bg),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
           // Column(
           //   children: [
           //     const Padding(

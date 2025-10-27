@@ -9,22 +9,23 @@ class HiveService {
 
   Box get box => Hive.box(_boxName);
 
-  Future<void> addUser(Map<String, dynamic> user) async {
-    await box.add(user);
+  Future<void> saveUser(Map<String, dynamic> userData) async {
+    await box.put('user', userData);
   }
 
-  List<Map<String, dynamic>> getAllUsers() {
-    return box.values.map((e) => Map<String, dynamic>.from(e)).toList();
+  Map<String, dynamic>? getUser() {
+    final user = box.get('user');
+    if (user != null) {
+      return Map<String, dynamic>.from(user);
+    }
+    return null;
   }
 
-  bool isUserExist(String name, String phone) {
-    final users = getAllUsers();
-    return users.any(
-      (u) => u['phone'] == phone,
-    );
+  Future<void> clearUser() async {
+    await box.delete('user');
   }
 
-  Future<void> clearAll() async {
-    await box.clear();
+  bool hasUser() {
+    return box.containsKey('user');
   }
 }

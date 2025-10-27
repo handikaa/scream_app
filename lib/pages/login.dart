@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:scream_app/pages/scream.dart';
 import 'package:scream_app/widgets/app_elevated_button.dart';
 import 'package:scream_app/widgets/form.dart';
 import 'package:scream_app/widgets/layout.dart';
@@ -72,84 +74,179 @@ class _LoginPageState extends State<LoginPage> {
   //   }
   // }
 
-  Future<void> _registerUser(BuildContext ctx) async {
-    if (_nameController.text.isEmpty || _phoneController.text.isEmpty) {
-      ScaffoldMessenger.of(ctx).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Form tidak boleh kosong',
-            style: TextStyle(fontSize: 15),
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-      return;
-    }
-
+  Future<void> _registerUser(BuildContext context) async {
+    final dio = Dio();
     final hive = HiveService();
+
     final name = _nameController.text.trim();
     final phone = _phoneController.text.trim();
 
-    final exists = hive.isUserExist(name, phone);
-
-    if (exists) {
-      ScaffoldMessenger.of(ctx).showSnackBar(
+    if (name.isEmpty || phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nama dan No Telp tidak boleh kosong')),
+      );
+      return;
+    }
+    if (phone.length < 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'no telp sudah terdaftar, silahkan beri kesempatan yang lain',
-            style: TextStyle(fontSize: 15),
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
+            content: Text('Invalid phone number at least 10 karakter')),
       );
       return;
     }
 
-    await hive.addUser({'name': name, 'phone': phone});
+    // Tampilkan loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
 
-    final permission = await Permission.microphone.request();
+    try {
+      final response = await dio.post(
+        'https://scream-apps-api.on-forge.com/save-data.php',
+        data: {
+          "name": name,
+          "phone": phone,
+        },
+      );
 
-    if (permission.isGranted) {
-      // ignore: use_build_context_synchronously
-      Navigator.pushNamed(context, '/scream');
-      // Navigator.pushNamed(context, '/select-prize');
-    } else {
-      // ignore: use_build_context_synchronously
+      Navigator.pop(context); // Tutup loading
+
+      if (response.statusCode == 201 && response.data['success'] == true) {
+        await hive.clearUser();
+
+        final userData = response.data['data'];
+
+        await hive.saveUser(userData);
+
+        final permission = await Permission.microphone.request();
+
+        if (permission.isGranted) {
+          Navigator.pushNamedAndRemoveUntil(
+              context, '/scream', (route) => false);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Akses microphone tidak diberikan!'),
+            ),
+          );
+        }
+
+        // Navigator.pushReplacementNamed(
+        //   context,
+        //   '/scream',
+        // );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              backgroundColor: Colors.red,
+              content: Text(
+                response.data['error'] ?? 'Gagal register',
+                style: TextStyle(color: Colors.white),
+              )),
+        );
+      }
+    } on DioException catch (e) {
+      Navigator.pop(context); // Tutup loading
+
+      String errorMessage = 'Terjadi kesalahan';
+      if (e.response != null) {
+        if (e.response?.statusCode == 409) {
+          errorMessage =
+              e.response?.data['error'] ?? 'Nomor sudah terdaftar hari ini';
+        } else {
+          errorMessage = e.response?.data['error'] ?? 'Gagal register';
+        }
+      } else {
+        errorMessage = 'Tidak dapat terhubung ke server';
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Akses microphone tidak diberikan!'),
-        ),
+        SnackBar(
+            backgroundColor: Colors.red,
+            content: Text(
+              errorMessage,
+              style: TextStyle(color: Colors.white),
+            )),
       );
     }
-
-    // ScaffoldMessenger.of(ctx).showSnackBar(
-    //   const SnackBar(
-    //     content: Text('Registrasi berhasil! Silakan login.'),
-    //     backgroundColor: Colors.green,
-    //   ),
-    // );
-
-    // Navigator.pushNamed(ctx, '/login');
   }
+
+  // Future<void> _registerUser(BuildContext ctx) async {
+  //   if (_nameController.text.isEmpty || _phoneController.text.isEmpty) {
+  //     ScaffoldMessenger.of(ctx).showSnackBar(
+  //       const SnackBar(
+  //         content: Text(
+  //           'Form tidak boleh kosong',
+  //           style: TextStyle(fontSize: 15),
+  //         ),
+  //         backgroundColor: Colors.redAccent,
+  //       ),
+  //     );
+  //     return;
+  //   }
+
+  //   final hive = HiveService();
+  //   final name = _nameController.text.trim();
+  //   final phone = _phoneController.text.trim();
+
+  //   final exists = hive.isUserExist(name, phone);
+
+  //   if (exists) {
+  //     ScaffoldMessenger.of(ctx).showSnackBar(
+  //       const SnackBar(
+  //         content: Text(
+  //           'no telp sudah terdaftar, silahkan beri kesempatan yang lain',
+  //           style: TextStyle(fontSize: 15),
+  //         ),
+  //         backgroundColor: Colors.redAccent,
+  //       ),
+  //     );
+  //     return;
+  //   }
+
+  //   await hive.addUser({'name': name, 'phone': phone});
+
+  //   final permission = await Permission.microphone.request();
+
+  //   if (permission.isGranted) {
+  //     // ignore: use_build_context_synchronously
+  //     Navigator.pushNamed(context, '/scream');
+  //     // Navigator.pushNamed(context, '/select-prize');
+  //   } else {
+  //     // ignore: use_build_context_synchronously
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text('Akses microphone tidak diberikan!'),
+  //       ),
+  //     );
+  //   }
+
+  //   // ScaffoldMessenger.of(ctx).showSnackBar(
+  //   //   const SnackBar(
+  //   //     content: Text('Registrasi berhasil! Silakan login.'),
+  //   //     backgroundColor: Colors.green,
+  //   //   ),
+  //   // );
+
+  //   // Navigator.pushNamed(ctx, '/login');
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Layout(
+      bg: 'assets/images/bg-clw-2.png',
       children: [
-        Container(
-          decoration: const BoxDecoration(
-              image: DecorationImage(
-                  image: AssetImage('assets/images/clw.png'),
-                  fit: BoxFit.cover)),
-          height: MediaQuery.of(context).size.height * 0.3,
-        ),
-        SizedBox(
-          height: MediaQuery.of(context).size.height * 0.04,
-        ),
-        Image.asset(
-          'assets/images/screan-clw.png',
-          width: 80,
-          height: 80,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/images/logo-clw.png',
+              width: 100,
+              height: 100,
+            ),
+          ],
         ),
         SizedBox(
           height: MediaQuery.of(context).size.height * 0.05,
@@ -176,8 +273,20 @@ class _LoginPageState extends State<LoginPage> {
             _registerUser(context);
           },
           child: Image.asset(
-            'assets/images/btn-start-clw.png',
+            'assets/images/btn-submit-clw.png',
             height: 80,
+          ),
+        ),
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.02,
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 30),
+          child: Text(
+            'Follow Us On IG & Tiktok\n@clawset.id',
+            style: TextStyle(
+                color: Colors.white, fontSize: 25, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.right,
           ),
         ),
       ],

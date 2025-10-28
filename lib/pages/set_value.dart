@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../data/local_shared.dart';
 import '../widgets/form.dart';
 import '../widgets/layout.dart';
 
@@ -17,6 +18,8 @@ class _SetValuePageState extends State<SetValuePage> {
   final _easyController = TextEditingController();
   final _medController = TextEditingController();
   final _hardController = TextEditingController();
+  final _timerController = TextEditingController();
+  int? savedTimer;
 
   late Box<Map> levelBox;
 
@@ -24,6 +27,42 @@ class _SetValuePageState extends State<SetValuePage> {
   void initState() {
     super.initState();
     _initHive();
+    _loadLocalTimer();
+  }
+
+  Future<void> _loadLocalTimer() async {
+    final timer = await LocalStorageHelper.getTimer();
+    if (timer != null) {
+      setState(() {
+        savedTimer = timer;
+        _timerController.text = timer.toString();
+      });
+      debugPrint('⏱ Timer ditemukan di local: $timer');
+    } else {
+      debugPrint('⚠️ Belum ada timer tersimpan');
+    }
+  }
+
+  Future<void> _saveValueLocalTimer() async {
+    if (!isValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Masukkan timer yang valid!')),
+      );
+      return;
+    }
+
+    final timerValue = int.parse(_timerController.text);
+    await LocalStorageHelper.saveTimer(timerValue);
+
+    if (mounted) {
+      setState(() {
+        savedTimer = timerValue;
+      });
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Timer $timerValue second succesfully saved')),
+    );
   }
 
   Future<void> _initHive() async {
@@ -73,7 +112,7 @@ class _SetValuePageState extends State<SetValuePage> {
     _easyController.dispose();
     _medController.dispose();
     _hardController.dispose();
-
+    _timerController.dispose();
     super.dispose();
   }
 
@@ -94,55 +133,71 @@ class _SetValuePageState extends State<SetValuePage> {
         SizedBox(height: MediaQuery.of(context).size.height * 0.05),
 
         // 🔹 Title
-        Column(
+        const Column(
           children: [
-            Stack(
-              children: [
-                Text(
-                  'Set Value Level',
-                  style: TextStyle(
-                    fontFamily: 'Cookie Crumble',
-                    fontSize: 40,
-                    fontWeight: FontWeight.w700,
-                    foreground: Paint()
-                      ..style = PaintingStyle.stroke
-                      ..strokeWidth = 5
-                      ..color = Colors.white,
-                  ),
-                ),
-                const Text(
-                  'Set Value Level',
-                  style: TextStyle(
-                    fontFamily: 'Cookie Crumble',
-                    fontSize: 40,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xffD19C3C),
-                  ),
-                ),
-              ],
+            Text(
+              'Set Value Level',
+              style: TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
             ),
           ],
         ),
+        // Column(
+        //   children: [
+        //     Stack(
+        //       children: [
+        //         Text(
+        //           'Set Value Level',
+        //           style: TextStyle(
+        //             fontFamily: 'Cookie Crumble',
+        //             fontSize: 40,
+        //             fontWeight: FontWeight.w700,
+        //             foreground: Paint()
+        //               ..style = PaintingStyle.stroke
+        //               ..strokeWidth = 5
+        //               ..color = Colors.white,
+        //           ),
+        //         ),
+        //         const Text(
+        //           'Set Value Level',
+        //           style: TextStyle(
+        //             fontFamily: 'Cookie Crumble',
+        //             fontSize: 40,
+        //             fontWeight: FontWeight.w700,
+        //             color: Color(0xffD19C3C),
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //   ],
+        // ),
         SizedBox(height: MediaQuery.of(context).size.height * 0.05),
 
-        // 🔹 Input EASY
         _buildLevelInput('EASY', _easyController),
 
         SizedBox(height: MediaQuery.of(context).size.height * 0.02),
 
-        // 🔹 Input MEDIUM
         _buildLevelInput('MEDIUM', _medController),
 
         SizedBox(height: MediaQuery.of(context).size.height * 0.02),
 
-        // 🔹 Input HARD
         _buildLevelInput('HARD', _hardController),
+
+        SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+
+        _buildLevelInput('Set Timer (in seconds)', _timerController),
 
         SizedBox(height: MediaQuery.of(context).size.height * 0.05),
 
         // 🔹 Tombol Submit
         InkWell(
-          onTap: _saveValueLocal,
+          onTap: () {
+            _saveValueLocalTimer();
+            _saveValueLocal();
+          },
           child: Image.asset(
             'assets/images/btn-submit-clw.png',
             height: 80,
@@ -156,31 +211,39 @@ class _SetValuePageState extends State<SetValuePage> {
   Widget _buildLevelInput(String label, TextEditingController controller) {
     return Column(
       children: [
-        Stack(
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Cookie Crumble',
-                fontSize: 30,
-                fontWeight: FontWeight.w700,
-                foreground: Paint()
-                  ..style = PaintingStyle.stroke
-                  ..strokeWidth = 5
-                  ..color = Colors.white,
-              ),
-            ),
-            Text(
-              label,
-              style: const TextStyle(
-                fontFamily: 'Cookie Crumble',
-                fontSize: 30,
-                fontWeight: FontWeight.w700,
-                color: Color(0xffD19C3C),
-              ),
-            ),
-          ],
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w500,
+            color: Colors.white,
+          ),
         ),
+        // Stack(
+        //   children: [
+        //     Text(
+        //       label,
+        //       style: TextStyle(
+        //         fontFamily: 'Cookie Crumble',
+        //         fontSize: 30,
+        //         fontWeight: FontWeight.w700,
+        //         foreground: Paint()
+        //           ..style = PaintingStyle.stroke
+        //           ..strokeWidth = 5
+        //           ..color = Colors.white,
+        //       ),
+        //     ),
+        //     Text(
+        //       label,
+        //       style: const TextStyle(
+        //         fontFamily: 'Cookie Crumble',
+        //         fontSize: 30,
+        //         fontWeight: FontWeight.w700,
+        //         color: Color(0xffD19C3C),
+        //       ),
+        //     ),
+        //   ],
+        // ),
         AppTextFormField(
           hintText: label,
           controller: controller,

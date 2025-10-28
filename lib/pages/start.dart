@@ -14,6 +14,7 @@ class StartPage extends StatefulWidget {
 
 class _StartPageState extends State<StartPage> {
   int _tapCount = 0;
+  int _tapTeks = 0;
   Timer? _resetTimer;
 
   void _onLogoTap() {
@@ -29,6 +30,22 @@ class _StartPageState extends State<StartPage> {
       _tapCount = 0;
 
       Navigator.pushNamed(context, '/set-value');
+    }
+  }
+
+  void _onTeksTap() {
+    _tapTeks++;
+
+    _resetTimer?.cancel();
+    _resetTimer = Timer(const Duration(seconds: 1), () {
+      _tapTeks = 0;
+    });
+
+    if (_tapTeks == 3) {
+      _resetTimer?.cancel();
+      _tapTeks = 0;
+
+      Navigator.pushNamed(context, '/select-level');
     }
   }
 
@@ -54,22 +71,6 @@ class _StartPageState extends State<StartPage> {
       //   // )
       // ],
       children: [
-        InkWell(
-          onTap: () => Navigator.pushNamed(context, '/select-level'),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Image.asset(
-                  'assets/images/settings.png',
-                  width: 30,
-                  height: 30,
-                ),
-              ],
-            ),
-          ),
-        ),
         GestureDetector(
           onTap: () => _onLogoTap(),
           child: Row(
@@ -84,12 +85,15 @@ class _StartPageState extends State<StartPage> {
           ),
         ),
         SizedBox(
-          height: MediaQuery.of(context).size.height * 0.02,
+          height: MediaQuery.of(context).size.height * 0.05,
         ),
-        Image.asset(
-          'assets/images/come-clw.png',
-          width: 140,
-          height: 140,
+        GestureDetector(
+          onTap: () => _onTeksTap(),
+          child: Image.asset(
+            'assets/images/come-clw.png',
+            width: 140,
+            height: 140,
+          ),
         ),
         SizedBox(
           height: MediaQuery.of(context).size.height * 0.04,

@@ -42,39 +42,49 @@ class _SelectLevelPageState extends State<SelectLevelPage> {
   @override
   Widget build(BuildContext context) {
     return Layout(children: [
-      Image.asset('assets/images/logo-clw.png', width: 150, height: 150),
+      Image.asset('assets/images/logo-clw.png', width: 100, height: 100),
 
       SizedBox(height: MediaQuery.of(context).size.height * 0.04),
 
-      Column(
+      const Column(
         children: [
-          Stack(
-            children: [
-              Text(
-                'Select Level',
-                style: TextStyle(
-                  fontFamily: 'Cookie Crumble',
-                  fontSize: 40,
-                  fontWeight: FontWeight.w700,
-                  foreground: Paint()
-                    ..style = PaintingStyle.stroke
-                    ..strokeWidth = 5
-                    ..color = Colors.white,
-                ),
-              ),
-              const Text(
-                'Select Level',
-                style: TextStyle(
-                  fontFamily: 'Cookie Crumble',
-                  fontSize: 40,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xffD19C3C),
-                ),
-              ),
-            ],
+          Text(
+            'Select Level',
+            style: TextStyle(
+                fontSize: 40, fontWeight: FontWeight.w700, color: Colors.white),
           ),
         ],
       ),
+
+      // Column(
+      //   children: [
+      //     Stack(
+      //       children: [
+      //         Text(
+      //           'Select Level',
+      //           style: TextStyle(
+      //             fontFamily: 'Cookie Crumble',
+      //             fontSize: 40,
+      //             fontWeight: FontWeight.w700,
+      //             foreground: Paint()
+      //               ..style = PaintingStyle.stroke
+      //               ..strokeWidth = 5
+      //               ..color = Colors.white,
+      //           ),
+      //         ),
+      //         const Text(
+      //           'Select Level',
+      //           style: TextStyle(
+      //             fontFamily: 'Cookie Crumble',
+      //             fontSize: 40,
+      //             fontWeight: FontWeight.w700,
+      //             color: Color(0xffD19C3C),
+      //           ),
+      //         ),
+      //       ],
+      //     ),
+      //   ],
+      // ),
 
       SizedBox(height: MediaQuery.of(context).size.height * 0.04),
 

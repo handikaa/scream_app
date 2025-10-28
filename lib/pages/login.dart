@@ -1,13 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:scream_app/pages/scream.dart';
-import 'package:scream_app/widgets/app_elevated_button.dart';
-import 'package:scream_app/widgets/form.dart';
-import 'package:scream_app/widgets/layout.dart';
-import 'package:scream_app/widgets/snackbar.dart';
 
 import '../data/local_hive.dart';
+import '../widgets/form.dart';
+import '../widgets/layout.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -159,7 +156,7 @@ class _LoginPageState extends State<LoginPage> {
           errorMessage = e.response?.data['error'] ?? 'Gagal register';
         }
       } else {
-        errorMessage = 'Tidak dapat terhubung ke server';
+        errorMessage = e.response!.data;
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -238,15 +235,10 @@ class _LoginPageState extends State<LoginPage> {
     return Layout(
       bg: 'assets/images/bg-clw-2.png',
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/images/logo-clw.png',
-              width: 100,
-              height: 100,
-            ),
-          ],
+        Image.asset(
+          'assets/images/logo-clw.png',
+          width: 100,
+          height: 100,
         ),
         SizedBox(
           height: MediaQuery.of(context).size.height * 0.05,
@@ -266,7 +258,7 @@ class _LoginPageState extends State<LoginPage> {
           onChanged: (value) => _isValid(),
         ),
         SizedBox(
-          height: MediaQuery.of(context).size.height * 0.05,
+          height: MediaQuery.of(context).size.height * 0.02,
         ),
         InkWell(
           onTap: () async {

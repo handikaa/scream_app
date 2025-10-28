@@ -37,7 +37,7 @@ class ScreamPageState extends State<ScreamPage> {
   double score = 0.0;
 
   int minimumScore = 1800;
-  final int stopInSeconds = 15;
+  int stopInSeconds = 15;
   final CountDownController _controller = CountDownController();
 
   bool isStarted = false;
@@ -57,7 +57,26 @@ class ScreamPageState extends State<ScreamPage> {
     super.initState();
     _loadLevelFromLocal();
     _init();
+    _loadTimerFromLocal();
     _startCountdown();
+  }
+
+  /// 🔹 Ambil data timer dari SharedPreferences
+  Future<void> _loadTimerFromLocal() async {
+    try {
+      int? localTimer = await LocalStorageHelper.getTimer();
+
+      setState(() {
+        stopInSeconds = localTimer ?? 15;
+      });
+
+      debugPrint('⏱ Timer loaded from local: $stopInSeconds seconds');
+    } catch (e) {
+      debugPrint('❌ Gagal memuat timer: $e');
+      setState(() {
+        stopInSeconds = 15; // fallback default
+      });
+    }
   }
 
   Future<void> _loadLevelFromLocal() async {
@@ -251,9 +270,15 @@ class ScreamPageState extends State<ScreamPage> {
         });
       });
 
-      // 🔹 Auto stop setelah 15 detik
-      timer = Timer(Duration(seconds: stopInSeconds),
-          () => _stop(success: score >= minimumScore));
+      // timer = Timer(Duration(seconds: stopInSeconds),
+      //     () => _stop(success: score >= minimumScore));
+      timer = Timer(Duration(seconds: stopInSeconds), () async {
+        final double percent = (score / minimumScore).clamp(0.0, 1.0);
+        final int displayedScore = (percent * 100).round();
+
+        final bool success = displayedScore >= 70;
+        await _stop(success: success);
+      });
     } catch (e) {
       debugPrint('Error start recording: $e');
     }
@@ -294,7 +319,8 @@ class ScreamPageState extends State<ScreamPage> {
 
       Future.delayed(const Duration(milliseconds: 800), () {
         if (success) {
-          Navigator.pushReplacementNamed(context, '/result');
+          Navigator.pushReplacementNamed(context, '/result',
+              arguments: displayedScore);
         } else {
           Navigator.pushReplacementNamed(context, '/failed',
               arguments: displayedScore);
@@ -317,117 +343,128 @@ class ScreamPageState extends State<ScreamPage> {
     return [
       Image.asset(
         'assets/images/logo-clw.png',
-        width: 150,
-        height: 150,
-      ),
-      SizedBox(
-        height: MediaQuery.of(context).size.height * 0.04,
-      ),
-      Image.asset(
-        'assets/images/wait.png',
-        width: 50,
-        height: 50,
+        width: 100,
+        height: 100,
       ),
       SizedBox(
         height: MediaQuery.of(context).size.height * 0.1,
       ),
+      Column(
+        children: [
+          Text(
+            'WAIT...',
+            style: TextStyle(
+                color: Colors.white, fontSize: 50, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+      SizedBox(
+        height: MediaQuery.of(context).size.height * 0.05,
+      ),
       Container(
-        padding: EdgeInsets.only(top: 70),
-        width: 250,
-        height: 250,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-              image: AssetImage(
-                'assets/images/paw.png',
-              ),
-              fit: BoxFit.contain),
-        ),
-        child: Center(
-          child: Stack(
-            children: [
-              Text(
-                '$countdown',
-                style: TextStyle(
-                    fontFamily: 'Cookie Crumble',
-                    fontSize: 60,
-                    fontWeight: FontWeight.w700,
-                    foreground: Paint()
-                      ..style = PaintingStyle.stroke
-                      ..strokeWidth = 5
-                      ..color = Colors.white),
-              ),
-              Text(
-                '$countdown',
-                style: const TextStyle(
-                  fontFamily: 'Cookie Crumble',
+          padding: EdgeInsets.only(top: 70),
+          width: 250,
+          height: 250,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+                image: AssetImage(
+                  'assets/images/paw.png',
+                ),
+                fit: BoxFit.contain),
+          ),
+          child: Center(
+            child: Text(
+              '$countdown',
+              style: TextStyle(
                   fontSize: 60,
                   fontWeight: FontWeight.w700,
-                  color: Color(
-                    0xff9956A3,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      )
-      // CircularCountDownTimer(
-      //   duration: _duration,
-      //   initialDuration: 0,
-      //   controller: _controller,
-      //   width: MediaQuery.of(context).size.width / 2.5,
-      //   height: MediaQuery.of(context).size.height / 2.5,
-      //   ringColor: Colors.transparent,
-      //   fillColor: Colors.black,
-      //   backgroundColor: Colors.transparent,
-      //   strokeWidth: 10.0,
-      //   strokeCap: StrokeCap.round,
-      //   textStyle: pathwayGothicOne48,
-      //   textFormat: CountdownTextFormat.S,
-      //   isReverse: true,
-      //   isReverseAnimation: true,
-      //   isTimerTextShown: true,
-      //   onComplete: () {
-      //     setState(() {
-      //       isStarted = true;
-      //     });
-      //     _start();
-      //   },
-      //   timeFormatterFunction: (defaultFormatterFunction, duration) {
-      //     if (duration.inSeconds == 0) return 'BERSIAP!';
-      //     return Function.apply(defaultFormatterFunction, [duration]);
-      //   },
-      // ),
-      // const Text(
-      //   'SEKUAT APA SUARAMU',
-      //   style: passionOne32,
-      // ),
-      // const Text(
-      //   'UNTUK NYALAKAN TV!',
-      //   style: passionOne32,
-      // ),
+                  color: Colors.white),
+              // Stack(
+              //   children: [
+              //     Text(
+              //       '$countdown',
+              //       style: TextStyle(
+              //           fontFamily: 'Cookie Crumble',
+              //           fontSize: 60,
+              //           fontWeight: FontWeight.w700,
+              //           foreground: Paint()
+              //             ..style = PaintingStyle.stroke
+              //             ..strokeWidth = 5
+              //             ..color = Colors.white),
+              //     ),
+              //     Text(
+              //       '$countdown',
+              //       style: const TextStyle(
+              //         fontFamily: 'Cookie Crumble',
+              //         fontSize: 60,
+              //         fontWeight: FontWeight.w700,
+              //         color: Color(
+              //           0xff9956A3,
+              //         ),
+              //       ),
+              //     ),
+              //   ],
+              // ),
+            ),
+          )
+          // CircularCountDownTimer(
+          //   duration: _duration,
+          //   initialDuration: 0,
+          //   controller: _controller,
+          //   width: MediaQuery.of(context).size.width / 2.5,
+          //   height: MediaQuery.of(context).size.height / 2.5,
+          //   ringColor: Colors.transparent,
+          //   fillColor: Colors.black,
+          //   backgroundColor: Colors.transparent,
+          //   strokeWidth: 10.0,
+          //   strokeCap: StrokeCap.round,
+          //   textStyle: pathwayGothicOne48,
+          //   textFormat: CountdownTextFormat.S,
+          //   isReverse: true,
+          //   isReverseAnimation: true,
+          //   isTimerTextShown: true,
+          //   onComplete: () {
+          //     setState(() {
+          //       isStarted = true;
+          //     });
+          //     _start();
+          //   },
+          //   timeFormatterFunction: (defaultFormatterFunction, duration) {
+          //     if (duration.inSeconds == 0) return 'BERSIAP!';
+          //     return Function.apply(defaultFormatterFunction, [duration]);
+          //   },
+          // ),
+          // const Text(
+          //   'SEKUAT APA SUARAMU',
+          //   style: passionOne32,
+          // ),
+          // const Text(
+          //   'UNTUK NYALAKAN TV!',
+          //   style: passionOne32,
+          // ),
 
-      // Debug Buttons
-      // Row(
-      //   mainAxisAlignment: MainAxisAlignment.spaceAround,
-      //   children: [
-      //     StartButton(
-      //       onPressed: () {
-      //         _controller.start();
-      //       },
-      //       child: const Text('Start', style: TextStyle(color: Colors.white)),
-      //     ),
-      //     StartButton(
-      //       onPressed: () {
-      //         _controller.reset();
-      //         setState(() {
-      //           isStarted = false;
-      //         });
-      //       },
-      //       child: const Text('Reset', style: TextStyle(color: Colors.white)),
-      //     ),
-      //   ],
-      // )
+          // Debug Buttons
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceAround,
+          //   children: [
+          //     StartButton(
+          //       onPressed: () {
+          //         _controller.start();
+          //       },
+          //       child: const Text('Start', style: TextStyle(color: Colors.white)),
+          //     ),
+          //     StartButton(
+          //       onPressed: () {
+          //         _controller.reset();
+          //         setState(() {
+          //           isStarted = false;
+          //         });
+          //       },
+          //       child: const Text('Reset', style: TextStyle(color: Colors.white)),
+          //     ),
+          //   ],
+          // )
+          ),
     ];
   }
 
@@ -439,28 +476,31 @@ class ScreamPageState extends State<ScreamPage> {
     return [
       Image.asset(
         'assets/images/logo-clw.png',
-        width: 150,
-        height: 150,
-      ),
-      SizedBox(
-        height: MediaQuery.of(context).size.height * 0.04,
-      ),
-      Image.asset(
-        'assets/images/scream-clw.png',
-        width: 50,
-        height: 50,
+        width: 100,
+        height: 100,
       ),
       SizedBox(
         height: MediaQuery.of(context).size.height * 0.1,
       ),
-      // Ganti bagian AnimatedOpacity dengan ini:
+      Column(
+        children: [
+          Text(
+            'SCREAAAM!!!',
+            style: TextStyle(
+                color: Colors.white, fontSize: 50, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+      SizedBox(
+        height: MediaQuery.of(context).size.height * 0.05,
+      ),
+
       SizedBox(
         width: 250,
         height: 250,
         child: Stack(
           alignment: Alignment.bottomCenter,
           children: [
-            // 🔹 Background Paw (kosong, misal abu-abu samar jika mau)
             Opacity(
               opacity: 0.2,
               child: Image.asset(
@@ -470,7 +510,6 @@ class ScreamPageState extends State<ScreamPage> {
                 fit: BoxFit.contain,
               ),
             ),
-
             ClipRect(
               child: Align(
                 alignment: Alignment.bottomCenter,
@@ -492,67 +531,85 @@ class ScreamPageState extends State<ScreamPage> {
       ),
       Column(
         children: [
-          Stack(
-            children: [
-              Text(
-                '$displayedScore/100',
-                style: TextStyle(
-                    fontFamily: 'Cookie Crumble',
-                    fontSize: 40,
-                    fontWeight: FontWeight.w700,
-                    foreground: Paint()
-                      ..style = PaintingStyle.stroke
-                      ..strokeWidth = 3
-                      ..color = Colors.white),
-              ),
-              Text(
-                '$displayedScore/100',
-                style: const TextStyle(
-                  fontFamily: 'Cookie Crumble',
+          Text('$displayedScore/100',
+              style: TextStyle(
                   fontSize: 40,
                   fontWeight: FontWeight.w700,
-                  color: Color(
-                    0xff9956A3,
-                  ),
-                ),
-              ),
-            ],
-          ),
+                  color: Colors.white)),
         ],
       ),
+      // Column(
+      //   children: [
+      //     Stack(
+      //       children: [
+      //         Text(
+      //           '$displayedScore/100',
+      //           style: TextStyle(
+      //               fontFamily: 'Cookie Crumble',
+      //               fontSize: 40,
+      //               fontWeight: FontWeight.w700,
+      //               foreground: Paint()
+      //                 ..style = PaintingStyle.stroke
+      //                 ..strokeWidth = 3
+      //                 ..color = Colors.white),
+      //         ),
+      //         Text(
+      //           '$displayedScore/100',
+      //           style: const TextStyle(
+      //             fontFamily: 'Cookie Crumble',
+      //             fontSize: 40,
+      //             fontWeight: FontWeight.w700,
+      //             color: Color(
+      //               0xff9956A3,
+      //             ),
+      //           ),
+      //         ),
+      //       ],
+      //     ),
+      //   ],
+      // ),
       SizedBox(
         height: MediaQuery.of(context).size.height * 0.05,
       ),
-      Column(
-        children: [
-          Stack(
-            children: [
-              Text(
-                '${((_current?.duration?.inMinutes ?? 0) % 60).toString().padLeft(2, '0')}:${((_current?.duration?.inSeconds ?? 0) % 60).toString().padLeft(2, '0')}.${ms.toString().padLeft(3, '0')}',
-                style: TextStyle(
-                    fontFamily: 'Cookie Crumble',
-                    fontSize: 60,
-                    fontWeight: FontWeight.w700,
-                    foreground: Paint()
-                      ..style = PaintingStyle.stroke
-                      ..strokeWidth = 5
-                      ..color = Colors.white),
-              ),
-              Text(
-                '${((_current?.duration?.inMinutes ?? 0) % 60).toString().padLeft(2, '0')}:${((_current?.duration?.inSeconds ?? 0) % 60).toString().padLeft(2, '0')}.${ms.toString().padLeft(3, '0')}',
-                style: const TextStyle(
-                  fontFamily: 'Cookie Crumble',
-                  fontSize: 60,
-                  fontWeight: FontWeight.w700,
-                  color: Color(
-                    0xff9956A3,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      // Column(
+      //   children: [
+      //     Text(
+      //       '${((_current?.duration?.inMinutes ?? 0) % 60).toString().padLeft(2, '0')}:${((_current?.duration?.inSeconds ?? 0) % 60).toString().padLeft(2, '0')}.${ms.toString().padLeft(3, '0')}',
+      //       style: const TextStyle(
+      //           fontSize: 50, fontWeight: FontWeight.w700, color: Colors.white),
+      //     ),
+      //   ],
+      // ),
+      // Column(
+      //   children: [
+      //     Stack(
+      //       children: [
+      //         Text(
+      //           '${((_current?.duration?.inMinutes ?? 0) % 60).toString().padLeft(2, '0')}:${((_current?.duration?.inSeconds ?? 0) % 60).toString().padLeft(2, '0')}.${ms.toString().padLeft(3, '0')}',
+      //           style: TextStyle(
+      //               fontFamily: 'Cookie Crumble',
+      //               fontSize: 60,
+      //               fontWeight: FontWeight.w700,
+      //               foreground: Paint()
+      //                 ..style = PaintingStyle.stroke
+      //                 ..strokeWidth = 5
+      //                 ..color = Colors.white),
+      //         ),
+      //         Text(
+      //           '${((_current?.duration?.inMinutes ?? 0) % 60).toString().padLeft(2, '0')}:${((_current?.duration?.inSeconds ?? 0) % 60).toString().padLeft(2, '0')}.${ms.toString().padLeft(3, '0')}',
+      //           style: const TextStyle(
+      //             fontFamily: 'Cookie Crumble',
+      //             fontSize: 60,
+      //             fontWeight: FontWeight.w700,
+      //             color: Color(
+      //               0xff9956A3,
+      //             ),
+      //           ),
+      //         ),
+      //       ],
+      //     ),
+      //   ],
+      // ),
 
       // const Column(
       //   children: [

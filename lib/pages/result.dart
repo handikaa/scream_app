@@ -7,7 +7,8 @@ import '../widgets/generate_random_code.dart';
 import '../widgets/layout.dart';
 
 class ResultPage extends StatefulWidget {
-  const ResultPage({super.key});
+  final int score;
+  const ResultPage({super.key, required this.score});
 
   @override
   State<ResultPage> createState() => _ResultPageState();
@@ -26,7 +27,7 @@ class _ResultPageState extends State<ResultPage> {
 
     _loadUserFromHive();
 
-    _submitScore(100);
+    _submitScore(widget.score);
   }
 
   Future<void> _loadUserFromHive() async {
@@ -115,11 +116,11 @@ class _ResultPageState extends State<ResultPage> {
                 height: 60,
               ),
               SizedBox(
-                height: MediaQuery.of(context).size.height * 0.05,
+                height: MediaQuery.of(context).size.height * 0.03,
               ),
 
               Container(
-                height: MediaQuery.of(context).size.height * 0.4,
+                padding: const EdgeInsets.symmetric(vertical: 40),
                 margin: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
@@ -131,16 +132,16 @@ class _ResultPageState extends State<ResultPage> {
                     const Text(
                       'SCORE',
                       style: TextStyle(
-                        fontSize: 40,
+                        fontSize: 35,
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const Text(
-                      '100/100',
+                    Text(
+                      '${widget.score}/100',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 40,
+                        fontSize: 35,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
@@ -202,7 +203,7 @@ class _ResultPageState extends State<ResultPage> {
                     const Text(
                       'UNIQ CODE',
                       style: TextStyle(
-                        fontSize: 40,
+                        fontSize: 35,
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
                       ),
@@ -211,7 +212,7 @@ class _ResultPageState extends State<ResultPage> {
                       uniqCode!,
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 40,
+                        fontSize: 35,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
@@ -287,9 +288,20 @@ class _ResultPageState extends State<ResultPage> {
               //   height: 90,
               // ),
               SizedBox(
-                height: MediaQuery.of(context).size.height * 0.13,
+                height: MediaQuery.of(context).size.height * 0.03,
               ),
-
+              Text(
+                "SHOW TO CASHIER\nTO CLAIM",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 25,
+                  fontWeight: FontWeight.w800,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.03,
+              ),
               InkWell(
                 onTap: () {
                   Navigator.pushNamedAndRemoveUntil(

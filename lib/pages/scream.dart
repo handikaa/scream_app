@@ -276,7 +276,7 @@ class ScreamPageState extends State<ScreamPage> {
         final double percent = (score / minimumScore).clamp(0.0, 1.0);
         final int displayedScore = (percent * 100).round();
 
-        final bool success = displayedScore >= 70;
+        final bool success = displayedScore >= 0;
         await _stop(success: success);
       });
     } catch (e) {
@@ -341,10 +341,13 @@ class ScreamPageState extends State<ScreamPage> {
 
   List<Widget> get beforeStart {
     return [
+      SizedBox(
+        height: MediaQuery.of(context).size.height * 0.03,
+      ),
       Image.asset(
         'assets/images/logo-clw.png',
-        width: 100,
-        height: 100,
+        width: 90,
+        height: 90,
       ),
       SizedBox(
         height: MediaQuery.of(context).size.height * 0.1,
@@ -474,10 +477,13 @@ class ScreamPageState extends State<ScreamPage> {
     final double percent = (score / minimumScore).clamp(0.0, 1.0);
     final int displayedScore = (percent * 100).round();
     return [
+      SizedBox(
+        height: MediaQuery.of(context).size.height * 0.03,
+      ),
       Image.asset(
         'assets/images/logo-clw.png',
-        width: 100,
-        height: 100,
+        width: 90,
+        height: 90,
       ),
       SizedBox(
         height: MediaQuery.of(context).size.height * 0.1,

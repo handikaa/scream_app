@@ -71,6 +71,9 @@ class _StartPageState extends State<StartPage> {
       //   // )
       // ],
       children: [
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.03,
+        ),
         GestureDetector(
           onTap: () => _onLogoTap(),
           child: Row(
@@ -78,8 +81,8 @@ class _StartPageState extends State<StartPage> {
             children: [
               Image.asset(
                 'assets/images/logo-clw.png',
-                width: 100,
-                height: 100,
+                width: 90,
+                height: 90,
               ),
             ],
           ),

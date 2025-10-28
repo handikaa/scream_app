@@ -74,10 +74,10 @@ class _MyAppState extends State<MyApp> {
             );
 
           case '/failed':
-            // final arg = settings.arguments as int;
+            final arg = settings.arguments as int;
             return MaterialPageRoute(builder: (context) {
               return FailedPage(
-                score: 93,
+                score: arg,
               );
             });
 

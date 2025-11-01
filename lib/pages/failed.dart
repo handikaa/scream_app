@@ -8,8 +8,9 @@ import '../style.dart';
 import '../widgets/layout.dart';
 
 class FailedPage extends StatefulWidget {
-  final int score;
-  const FailedPage({super.key, required this.score});
+  final String level;
+  // final int score;
+  const FailedPage({super.key, required this.level});
 
   @override
   State<FailedPage> createState() => _FailedPageState();
@@ -39,8 +40,8 @@ class _FailedPageState extends State<FailedPage> {
   @override
   void initState() {
     super.initState();
-    _loadUserFromHive();
-    _submitScore();
+    // _loadUserFromHive();
+    // _submitScore();
   }
 
   Future<void> _loadUserFromHive() async {
@@ -70,61 +71,61 @@ class _FailedPageState extends State<FailedPage> {
     );
   }
 
-  Future<void> _submitScore() async {
-    if (!mounted) return; // ✅ pastikan widget masih aktif
+  // Future<void> _submitScore() async {
+  //   if (!mounted) return; // ✅ pastikan widget masih aktif
 
-    if (_userData == null || _userData?['uniq_id'] == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User tidak ditemukan di local storage')),
-      );
-      return;
-    }
+  //   if (_userData == null || _userData?['uniq_id'] == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('User tidak ditemukan di local storage')),
+  //     );
+  //     return;
+  //   }
 
-    if (mounted) setState(() => _isLoading = true);
+  //   if (mounted) setState(() => _isLoading = true);
 
-    final uniqId = _userData!['uniq_id'];
+  //   final uniqId = _userData!['uniq_id'];
 
-    try {
-      final response = await _dio.post(
-        'https://scream-apps-api.on-forge.com/save-score.php',
-        data: {
-          "uniq_id": uniqId,
-          "score": widget.score,
-        },
-      );
+  //   try {
+  //     final response = await _dio.post(
+  //       'https://scream-apps-api.on-forge.com/save-score.php',
+  //       data: {
+  //         "uniq_id": uniqId,
+  //         "score": widget.score,
+  //       },
+  //     );
 
-      if (!mounted) return; // ✅ stop jika sudah keluar dari halaman
+  //     if (!mounted) return; // ✅ stop jika sudah keluar dari halaman
 
-      if (mounted) setState(() => _isLoading = false);
+  //     if (mounted) setState(() => _isLoading = false);
 
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        final msg = response.data['message'] ?? 'Score Berhasil disimpan';
+  //     if (response.statusCode == 200 && response.data['success'] == true) {
+  //       final msg = response.data['message'] ?? 'Score Berhasil disimpan';
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
-        );
-      } else {
-        final msg = response.data['message'] ?? 'Gagal mengirim score';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal: $msg')),
-        );
-      }
-    } on DioException catch (e) {
-      if (!mounted) return;
-      if (mounted) setState(() => _isLoading = false);
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text(msg)),
+  //       );
+  //     } else {
+  //       final msg = response.data['message'] ?? 'Gagal mengirim score';
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text('Gagal: $msg')),
+  //       );
+  //     }
+  //   } on DioException catch (e) {
+  //     if (!mounted) return;
+  //     if (mounted) setState(() => _isLoading = false);
 
-      String message = 'Terjadi kesalahan';
-      if (e.response != null) {
-        message = e.response?.data['error'] ?? e.message ?? message;
-      }
+  //     String message = 'Terjadi kesalahan';
+  //     if (e.response != null) {
+  //       message = e.response?.data['error'] ?? e.message ?? message;
+  //     }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text(message)),
+  //     );
+  //   } finally {
+  //     if (mounted) setState(() => _isLoading = false);
+  //   }
+  // }
 
   // Future<void> _submitScore() async {
   //   if (_userData == null || _userData?['uniq_id'] == null) {
@@ -181,46 +182,55 @@ class _FailedPageState extends State<FailedPage> {
     return Stack(
       children: [
         Layout(backgroundColorFilter: lGred, lightLogo: true, children: [
-          Image.asset(
-            'assets/images/logo-clw.png',
-            width: 100,
-            height: 100,
-          ),
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.1,
-          ),
-          Image.asset(
-            'assets/images/on-no-clw.png',
-            width: 70,
-            height: 70,
+          // SizedBox(
+          //   height: MediaQuery.of(context).size.height * 0.1,
+          // ),
+          // Image.asset(
+          //   'assets/images/on-no-clw.png',
+          //   width: 70,
+          //   height: 70,
+          // ),
+          // SizedBox(
+          //   height: MediaQuery.of(context).size.height * 0.05,
+          // ),
+          // Image.asset(
+          //   'assets/images/not-hear-clw.png',
+          //   width: 170,
+          //   height: 170,
+          // ),
+
+          // InkWell(
+          //   onTap: () {
+          //     Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+          //   },
+          //   child: Image.asset(
+          //     'assets/images/back-clw.png',
+          //     width: 100,
+          //     height: 100,
+          //   ),
+          // ),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              getMessageByLevel(widget.level),
+              style: passionOne28.copyWith(color: Colors.black),
+              textAlign: TextAlign.center,
+            ),
           ),
           SizedBox(
             height: MediaQuery.of(context).size.height * 0.05,
-          ),
-          Image.asset(
-            'assets/images/not-hear-clw.png',
-            width: 170,
-            height: 170,
-          ),
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.15,
           ),
           InkWell(
             onTap: () {
               Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
             },
             child: Image.asset(
-              'assets/images/back-clw.png',
-              width: 100,
-              height: 100,
+              'assets/images/back-button.png',
+              width: MediaQuery.of(context).size.width * 0.5,
+              height: MediaQuery.of(context).size.width * 0.5,
             ),
           ),
-
-          // Text(
-          //   getMessageByLevel(level),
-          //   style: passionOne28.copyWith(color: Colors.black),
-          //   textAlign: TextAlign.center,
-          // ),
           // Column(
           //   children: [
           //     Text(

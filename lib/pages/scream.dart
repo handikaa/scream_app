@@ -36,7 +36,7 @@ class ScreamPageState extends State<ScreamPage> {
   AudioPlayer audioPlayer = AudioPlayer();
   double score = 0.0;
 
-  int minimumScore = 1800;
+  int minimumScore = 2800;
   int stopInSeconds = 15;
   final CountDownController _controller = CountDownController();
 
@@ -85,6 +85,7 @@ class ScreamPageState extends State<ScreamPage> {
 
       final levelBox = Hive.box<Map>('levelBox');
       final data = levelBox.get('levels');
+      // final data = levelBox.get('levels');
 
       int defaultEasy = 2800;
       int defaultMed = 3800;
@@ -103,7 +104,7 @@ class ScreamPageState extends State<ScreamPage> {
         if (data.containsKey(level)) {
           newScore = data[level] is int
               ? data[level]
-              : int.tryParse('${data[level]}') ?? defaultEasy;
+              : int.tryParse('easy') ?? defaultEasy;
         } else {
           if (level == 'easy') newScore = defaultEasy;
           if (level == 'med') newScore = defaultMed;
@@ -237,52 +238,52 @@ class ScreamPageState extends State<ScreamPage> {
   //   }
   // }
 
-  Future<void> _start() async {
-    try {
-      await _recorder?.start();
-      var recording = await _recorder?.current(channel: 0);
-      setState(() => _current = recording);
+  // Future<void> _start() async {
+  //   try {
+  //     await _recorder?.start();
+  //     var recording = await _recorder?.current(channel: 0);
+  //     setState(() => _current = recording);
 
-      const tick = Duration(milliseconds: 50);
+  //     const tick = Duration(milliseconds: 50);
 
-      Timer.periodic(tick, (Timer t) async {
-        if (_currentStatus == RecordingStatus.Stopped) {
-          t.cancel();
-          return;
-        }
+  //     Timer.periodic(tick, (Timer t) async {
+  //       if (_currentStatus == RecordingStatus.Stopped) {
+  //         t.cancel();
+  //         return;
+  //       }
 
-        var current = await _recorder?.current(channel: 0);
-        final peak = current?.metering?.peakPower ?? -60;
-        ms += tick.inMilliseconds;
+  //       var current = await _recorder?.current(channel: 0);
+  //       final peak = current?.metering?.peakPower ?? -60;
+  //       ms += tick.inMilliseconds;
 
-        // 🔊 Hitung skor berdasarkan volume
-        setState(() {
-          if (peak > -20) {
-            double temp = (peak.abs() - 20);
-            score += temp.abs() * 2; // tambah multiplier biar terasa naik cepat
-          }
-          if (score >= minimumScore) {
-            isReached = true;
-            _stop(success: true);
-          }
-          _current = current;
-          _currentStatus = current?.status ?? RecordingStatus.Unset;
-        });
-      });
+  //       // 🔊 Hitung skor berdasarkan volume
+  //       setState(() {
+  //         if (peak > -20) {
+  //           double temp = (peak.abs() - 20);
+  //           score += temp.abs() * 2; // tambah multiplier biar terasa naik cepat
+  //         }
+  //         if (score >= minimumScore) {
+  //           isReached = true;
+  //           _stop(success: true);
+  //         }
+  //         _current = current;
+  //         _currentStatus = current?.status ?? RecordingStatus.Unset;
+  //       });
+  //     });
 
-      // timer = Timer(Duration(seconds: stopInSeconds),
-      //     () => _stop(success: score >= minimumScore));
-      timer = Timer(Duration(seconds: stopInSeconds), () async {
-        final double percent = (score / minimumScore).clamp(0.0, 1.0);
-        final int displayedScore = (percent * 100).round();
+  //     // timer = Timer(Duration(seconds: stopInSeconds),
+  //     //     () => _stop(success: score >= minimumScore));
+  //     timer = Timer(Duration(seconds: stopInSeconds), () async {
+  //       final double percent = (score / minimumScore).clamp(0.0, 1.0);
+  //       final int displayedScore = (percent * 100).round();
 
-        final bool success = displayedScore >= 0;
-        await _stop(success: success);
-      });
-    } catch (e) {
-      debugPrint('Error start recording: $e');
-    }
-  }
+  //       final bool success = displayedScore >= 0;
+  //       await _stop(success: success);
+  //     });
+  //   } catch (e) {
+  //     debugPrint('Error start recording: $e');
+  //   }
+  // }
 
   // Future<void> _stop({required bool success}) async {
   //   final double percent = (score / minimumScore).clamp(0.0, 1.0);
@@ -308,28 +309,28 @@ class ScreamPageState extends State<ScreamPage> {
   //   }
   // }
 
-  Future<void> _stop({required bool success}) async {
-    final double percent = (score / minimumScore).clamp(0.0, 1.0);
-    final int displayedScore = (percent * 100).round();
+  // Future<void> _stop({required bool success}) async {
+  //   final double percent = (score / minimumScore).clamp(0.0, 1.0);
+  //   final int displayedScore = (percent * 100).round();
 
-    try {
-      await _recorder?.stop();
-      timer.cancel();
-      setState(() => isFinished = true);
+  //   try {
+  //     await _recorder?.stop();
+  //     timer.cancel();
+  //     setState(() => isFinished = true);
 
-      Future.delayed(const Duration(milliseconds: 800), () {
-        if (success) {
-          Navigator.pushReplacementNamed(context, '/result',
-              arguments: displayedScore);
-        } else {
-          Navigator.pushReplacementNamed(context, '/failed',
-              arguments: displayedScore);
-        }
-      });
-    } catch (e) {
-      debugPrint('Error stop recording: $e');
-    }
-  }
+  //     Future.delayed(const Duration(milliseconds: 800), () {
+  //       if (success) {
+  //         Navigator.pushReplacementNamed(context, '/result',
+  //             arguments: displayedScore);
+  //       } else {
+  //         Navigator.pushReplacementNamed(context, '/failed',
+  //             arguments: displayedScore);
+  //       }
+  //     });
+  //   } catch (e) {
+  //     debugPrint('Error stop recording: $e');
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -341,133 +342,165 @@ class ScreamPageState extends State<ScreamPage> {
 
   List<Widget> get beforeStart {
     return [
-      SizedBox(
-        height: MediaQuery.of(context).size.height * 0.03,
-      ),
-      Image.asset(
-        'assets/images/logo-clw.png',
-        width: 90,
-        height: 90,
-      ),
-      SizedBox(
-        height: MediaQuery.of(context).size.height * 0.1,
-      ),
-      Column(
+      // SizedBox(
+      //   height: MediaQuery.of(context).size.height * 0.03,
+      // ),
+      // Image.asset(
+      //   'assets/images/logo-clw.png',
+      //   width: 90,
+      //   height: 90,
+      // ),
+      // SizedBox(
+      //   height: MediaQuery.of(context).size.height * 0.1,
+      // ),
+      // Column(
+      //   children: [
+      //     Text(
+      //       'WAIT...',
+      //       style: TextStyle(
+      //           color: Colors.white, fontSize: 50, fontWeight: FontWeight.bold),
+      //     ),
+      //   ],
+      // ),
+      // SizedBox(
+      //   height: MediaQuery.of(context).size.height * 0.05,
+      // ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            'WAIT...',
-            style: TextStyle(
-                color: Colors.white, fontSize: 50, fontWeight: FontWeight.bold),
+          CircularCountDownTimer(
+            duration: countdown,
+            initialDuration: 0,
+            controller: _controller,
+            width: MediaQuery.of(context).size.width / 2.5,
+            height: MediaQuery.of(context).size.height / 2.5,
+            ringColor: Colors.transparent,
+            fillColor: Colors.black,
+            backgroundColor: Colors.transparent,
+            strokeWidth: 10.0,
+            strokeCap: StrokeCap.round,
+            textStyle: pathwayGothicOne48,
+            textFormat: CountdownTextFormat.S,
+            isReverse: true,
+            isReverseAnimation: true,
+            isTimerTextShown: true,
+            onComplete: () {
+              setState(() {
+                isStarted = true;
+              });
+              _start();
+            },
+            timeFormatterFunction: (defaultFormatterFunction, duration) {
+              if (duration.inSeconds == 0) return 'BERSIAP!';
+              return Function.apply(defaultFormatterFunction, [duration]);
+            },
           ),
         ],
       ),
-      SizedBox(
-        height: MediaQuery.of(context).size.height * 0.05,
-      ),
-      Container(
-          padding: EdgeInsets.only(top: 70),
-          width: 250,
-          height: 250,
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-                image: AssetImage(
-                  'assets/images/paw.png',
-                ),
-                fit: BoxFit.contain),
-          ),
-          child: Center(
-            child: Text(
-              '$countdown',
-              style: TextStyle(
-                  fontSize: 60,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white),
-              // Stack(
-              //   children: [
-              //     Text(
-              //       '$countdown',
-              //       style: TextStyle(
-              //           fontFamily: 'Cookie Crumble',
-              //           fontSize: 60,
-              //           fontWeight: FontWeight.w700,
-              //           foreground: Paint()
-              //             ..style = PaintingStyle.stroke
-              //             ..strokeWidth = 5
-              //             ..color = Colors.white),
-              //     ),
-              //     Text(
-              //       '$countdown',
-              //       style: const TextStyle(
-              //         fontFamily: 'Cookie Crumble',
-              //         fontSize: 60,
-              //         fontWeight: FontWeight.w700,
-              //         color: Color(
-              //           0xff9956A3,
-              //         ),
-              //       ),
-              //     ),
-              //   ],
-              // ),
-            ),
-          )
-          // CircularCountDownTimer(
-          //   duration: _duration,
-          //   initialDuration: 0,
-          //   controller: _controller,
-          //   width: MediaQuery.of(context).size.width / 2.5,
-          //   height: MediaQuery.of(context).size.height / 2.5,
-          //   ringColor: Colors.transparent,
-          //   fillColor: Colors.black,
-          //   backgroundColor: Colors.transparent,
-          //   strokeWidth: 10.0,
-          //   strokeCap: StrokeCap.round,
-          //   textStyle: pathwayGothicOne48,
-          //   textFormat: CountdownTextFormat.S,
-          //   isReverse: true,
-          //   isReverseAnimation: true,
-          //   isTimerTextShown: true,
-          //   onComplete: () {
-          //     setState(() {
-          //       isStarted = true;
-          //     });
-          //     _start();
-          //   },
-          //   timeFormatterFunction: (defaultFormatterFunction, duration) {
-          //     if (duration.inSeconds == 0) return 'BERSIAP!';
-          //     return Function.apply(defaultFormatterFunction, [duration]);
-          //   },
-          // ),
-          // const Text(
-          //   'SEKUAT APA SUARAMU',
-          //   style: passionOne32,
-          // ),
-          // const Text(
-          //   'UNTUK NYALAKAN TV!',
-          //   style: passionOne32,
-          // ),
+      // Container(
+      //   padding: EdgeInsets.only(top: 70),
+      //   width: 250,
+      //   height: 250,
+      //   // decoration: const BoxDecoration(
+      //   //   image: DecorationImage(
+      //   //       image: AssetImage(
+      //   //         'assets/images/paw.png',
+      //   //       ),
+      //   //       fit: BoxFit.contain),
+      //   // ),
+      //   child: Center(
+      //     child: CircularCountDownTimer(
+      //       duration: countdown,
+      //       initialDuration: 0,
+      //       controller: _controller,
+      //       width: MediaQuery.of(context).size.width / 2.5,
+      //       height: MediaQuery.of(context).size.height / 2.5,
+      //       ringColor: Colors.transparent,
+      //       fillColor: Colors.black,
+      //       backgroundColor: Colors.transparent,
+      //       strokeWidth: 10.0,
+      //       strokeCap: StrokeCap.round,
+      //       textStyle: pathwayGothicOne48,
+      //       textFormat: CountdownTextFormat.S,
+      //       isReverse: true,
+      //       isReverseAnimation: true,
+      //       isTimerTextShown: true,
+      //       onComplete: () {
+      //         setState(() {
+      //           isStarted = true;
+      //         });
+      //         _start();
+      //       },
+      //       timeFormatterFunction: (defaultFormatterFunction, duration) {
+      //         if (duration.inSeconds == 0) return 'BERSIAP!';
+      //         return Function.apply(defaultFormatterFunction, [duration]);
+      //       },
+      //     ),
+      //     // Text(
+      //     //   '$countdown',
+      //     //   style: TextStyle(
+      //     //       fontSize: 60,
+      //     //       fontWeight: FontWeight.w700,
+      //     //       color: Colors.white),
+      //     // Stack(
+      //     //   children: [
+      //     //     Text(
+      //     //       '$countdown',
+      //     //       style: TextStyle(
+      //     //           fontFamily: 'Cookie Crumble',
+      //     //           fontSize: 60,
+      //     //           fontWeight: FontWeight.w700,
+      //     //           foreground: Paint()
+      //     //             ..style = PaintingStyle.stroke
+      //     //             ..strokeWidth = 5
+      //     //             ..color = Colors.white),
+      //     //     ),
+      //     //     Text(
+      //     //       '$countdown',
+      //     //       style: const TextStyle(
+      //     //         fontFamily: 'Cookie Crumble',
+      //     //         fontSize: 60,
+      //     //         fontWeight: FontWeight.w700,
+      //     //         color: Color(
+      //     //           0xff9956A3,
+      //     //         ),
+      //     //       ),
+      //     //     ),
+      //     //   ],
+      //     // ),
+      //   ),
+      // )
 
-          // Debug Buttons
-          // Row(
-          //   mainAxisAlignment: MainAxisAlignment.spaceAround,
-          //   children: [
-          //     StartButton(
-          //       onPressed: () {
-          //         _controller.start();
-          //       },
-          //       child: const Text('Start', style: TextStyle(color: Colors.white)),
-          //     ),
-          //     StartButton(
-          //       onPressed: () {
-          //         _controller.reset();
-          //         setState(() {
-          //           isStarted = false;
-          //         });
-          //       },
-          //       child: const Text('Reset', style: TextStyle(color: Colors.white)),
-          //     ),
-          //   ],
-          // )
-          ),
+      // const Text(
+      //   'SEKUAT APA SUARAMU',
+      //   style: passionOne32,
+      // ),
+      // const Text(
+      //   'UNTUK NYALAKAN TV!',
+      //   style: passionOne32,
+      // ),
+
+      // Debug Buttons
+      // Row(
+      //   mainAxisAlignment: MainAxisAlignment.spaceAround,
+      //   children: [
+      //     StartButton(
+      //       onPressed: () {
+      //         _controller.start();
+      //       },
+      //       child: const Text('Start', style: TextStyle(color: Colors.white)),
+      //     ),
+      //     StartButton(
+      //       onPressed: () {
+      //         _controller.reset();
+      //         setState(() {
+      //           isStarted = false;
+      //         });
+      //       },
+      //       child: const Text('Reset', style: TextStyle(color: Colors.white)),
+      //     ),
+      //   ],
+      // )
     ];
   }
 
@@ -477,73 +510,73 @@ class ScreamPageState extends State<ScreamPage> {
     final double percent = (score / minimumScore).clamp(0.0, 1.0);
     final int displayedScore = (percent * 100).round();
     return [
-      SizedBox(
-        height: MediaQuery.of(context).size.height * 0.03,
-      ),
-      Image.asset(
-        'assets/images/logo-clw.png',
-        width: 90,
-        height: 90,
-      ),
-      SizedBox(
-        height: MediaQuery.of(context).size.height * 0.1,
-      ),
-      Column(
-        children: [
-          Text(
-            'SCREAAAM!!!',
-            style: TextStyle(
-                color: Colors.white, fontSize: 50, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-      SizedBox(
-        height: MediaQuery.of(context).size.height * 0.05,
-      ),
+      // SizedBox(
+      //   height: MediaQuery.of(context).size.height * 0.03,
+      // ),
+      // Image.asset(
+      //   'assets/images/logo-clw.png',
+      //   width: 90,
+      //   height: 90,
+      // ),
+      // SizedBox(
+      //   height: MediaQuery.of(context).size.height * 0.1,
+      // ),
+      // Column(
+      //   children: [
+      //     Text(
+      //       'SCREAAAM!!!',
+      //       style: TextStyle(
+      //           color: Colors.white, fontSize: 50, fontWeight: FontWeight.bold),
+      //     ),
+      //   ],
+      // ),
+      // SizedBox(
+      //   height: MediaQuery.of(context).size.height * 0.05,
+      // ),
 
-      SizedBox(
-        width: 250,
-        height: 250,
-        child: Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            Opacity(
-              opacity: 0.2,
-              child: Image.asset(
-                'assets/images/paw.png',
-                width: 250,
-                height: 250,
-                fit: BoxFit.contain,
-              ),
-            ),
-            ClipRect(
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                heightFactor: (score / minimumScore).clamp(0.0, 1.0),
-                child: Image.asset(
-                  'assets/images/paw.png',
-                  width: 250,
-                  height: 250,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      // SizedBox(
+      //   width: 250,
+      //   height: 250,
+      //   child: Stack(
+      //     alignment: Alignment.bottomCenter,
+      //     children: [
+      //       Opacity(
+      //         opacity: 0.2,
+      //         child: Image.asset(
+      //           'assets/images/paw.png',
+      //           width: 250,
+      //           height: 250,
+      //           fit: BoxFit.contain,
+      //         ),
+      //       ),
+      //       ClipRect(
+      //         child: Align(
+      //           alignment: Alignment.bottomCenter,
+      //           heightFactor: (score / minimumScore).clamp(0.0, 1.0),
+      //           child: Image.asset(
+      //             'assets/images/paw.png',
+      //             width: 250,
+      //             height: 250,
+      //             fit: BoxFit.contain,
+      //           ),
+      //         ),
+      //       ),
+      //     ],
+      //   ),
+      // ),
 
-      SizedBox(
-        height: MediaQuery.of(context).size.height * 0.01,
-      ),
-      Column(
-        children: [
-          Text('$displayedScore/100',
-              style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white)),
-        ],
-      ),
+      // SizedBox(
+      //   height: MediaQuery.of(context).size.height * 0.01,
+      // ),
+      // Column(
+      //   children: [
+      //     Text('$displayedScore/100',
+      //         style: TextStyle(
+      //             fontSize: 40,
+      //             fontWeight: FontWeight.w700,
+      //             color: Colors.white)),
+      //   ],
+      // ),
       // Column(
       //   children: [
       //     Stack(
@@ -617,109 +650,109 @@ class ScreamPageState extends State<ScreamPage> {
       //   ],
       // ),
 
-      // const Column(
-      //   children: [
-      //     Text(
-      //       'MULAI TERIAK',
-      //       style: passionOne32,
-      //     ),
-      //     Text(
-      //       'UNTUK MENYALAKAN TV!',
-      //       style: passionOne32,
-      //     ),
-      //   ],
-      // ),
-      // SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+      const Column(
+        children: [
+          Text(
+            'MULAI TERIAK',
+            style: passionOne32,
+          ),
+          // Text(
+          //   'UNTUK MENYALAKAN TV!',
+          //   style: passionOne32,
+          // ),
+        ],
+      ),
+      SizedBox(height: MediaQuery.of(context).size.height * 0.1),
 
-      // SizedBox(
-      //   height: itemHeight,
-      //   child: SfRadialGauge(
-      //     enableLoadingAnimation: true,
-      //     animationDuration: 500,
-      //     axes: <RadialAxis>[
-      //       RadialAxis(
-      //         minimum: 0,
-      //         maximum: minimumScore.toDouble(),
-      //         showTicks: false,
-      //         showLabels: false,
-      //         axisLineStyle: const AxisLineStyle(
-      //           thickness: 20,
-      //         ),
-      //         ranges: <GaugeRange>[
-      //           /// Level 0
-      //           GaugeRange(
-      //             startValue: 0,
-      //             endValue: minimumScore * 0.01,
-      //             color: Colors.grey,
-      //             // label: 'Level 0',
-      //             sizeUnit: GaugeSizeUnit.factor,
-      //             startWidth: 0.5,
-      //             endWidth: 0.5,
-      //             labelStyle: const GaugeTextStyle(
-      //               fontSize: 12,
-      //               color: Colors.white,
-      //             ),
-      //           ),
+      SizedBox(
+        height: itemHeight,
+        child: SfRadialGauge(
+          enableLoadingAnimation: true,
+          animationDuration: 500,
+          axes: <RadialAxis>[
+            RadialAxis(
+              minimum: 0,
+              maximum: minimumScore.toDouble(),
+              showTicks: false,
+              showLabels: false,
+              axisLineStyle: const AxisLineStyle(
+                thickness: 20,
+              ),
+              ranges: <GaugeRange>[
+                /// Level 0
+                GaugeRange(
+                  startValue: 0,
+                  endValue: minimumScore * 0.01,
+                  color: Colors.grey,
+                  // label: 'Level 0',
+                  sizeUnit: GaugeSizeUnit.factor,
+                  startWidth: 0.5,
+                  endWidth: 0.5,
+                  labelStyle: const GaugeTextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                  ),
+                ),
 
-      //           /// Level 1
-      //           GaugeRange(
-      //             startValue: minimumScore * 0.01,
-      //             endValue: minimumScore * 0.35,
-      //             color: Colors.green,
-      //             label: 'Level 1',
-      //             sizeUnit: GaugeSizeUnit.factor,
-      //             startWidth: 0.5,
-      //             endWidth: 0.5,
-      //             labelStyle: const GaugeTextStyle(
-      //               fontSize: 12,
-      //               color: Colors.white,
-      //             ),
-      //           ),
+                /// Level 1
+                GaugeRange(
+                  startValue: minimumScore * 0.01,
+                  endValue: minimumScore * 0.35,
+                  color: Colors.green,
+                  label: 'Level 1',
+                  sizeUnit: GaugeSizeUnit.factor,
+                  startWidth: 0.5,
+                  endWidth: 0.5,
+                  labelStyle: const GaugeTextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                  ),
+                ),
 
-      //           /// Level 2
-      //           GaugeRange(
-      //             startValue: minimumScore * 0.35,
-      //             endValue: minimumScore * 0.7,
-      //             color: Colors.orange,
-      //             label: 'Level 2',
-      //             sizeUnit: GaugeSizeUnit.factor,
-      //             startWidth: 0.5,
-      //             endWidth: 0.5,
-      //             labelStyle: const GaugeTextStyle(
-      //               fontSize: 12,
-      //               color: Colors.white,
-      //             ),
-      //           ),
+                /// Level 2
+                GaugeRange(
+                  startValue: minimumScore * 0.35,
+                  endValue: minimumScore * 0.7,
+                  color: Colors.orange,
+                  label: 'Level 2',
+                  sizeUnit: GaugeSizeUnit.factor,
+                  startWidth: 0.5,
+                  endWidth: 0.5,
+                  labelStyle: const GaugeTextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                  ),
+                ),
 
-      //           /// Level 3
-      //           GaugeRange(
-      //             startValue: minimumScore * 0.7,
-      //             endValue: minimumScore.toDouble(),
-      //             color: Colors.red,
-      //             label: 'Level 3',
-      //             sizeUnit: GaugeSizeUnit.factor,
-      //             startWidth: 0.5,
-      //             endWidth: 0.5,
-      //             labelStyle: const GaugeTextStyle(
-      //               fontSize: 12,
-      //               color: Colors.white,
-      //             ),
-      //           ),
-      //         ],
-      //         pointers: <GaugePointer>[
-      //           NeedlePointer(
-      //             value: score > minimumScore ? minimumScore.toDouble() : score,
-      //             needleColor: Colors.black,
-      //             knobStyle: const KnobStyle(
-      //               color: Colors.black,
-      //               knobRadius: 0.06,
-      //             ),
-      //           ),
-      //         ],
-      //       ),
-      //     ],
-      //   ),
-      // )
+                /// Level 3
+                GaugeRange(
+                  startValue: minimumScore * 0.7,
+                  endValue: minimumScore.toDouble(),
+                  color: Colors.red,
+                  label: 'Level 3',
+                  sizeUnit: GaugeSizeUnit.factor,
+                  startWidth: 0.5,
+                  endWidth: 0.5,
+                  labelStyle: const GaugeTextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+              pointers: <GaugePointer>[
+                NeedlePointer(
+                  value: score > minimumScore ? minimumScore.toDouble() : score,
+                  needleColor: Colors.black,
+                  knobStyle: const KnobStyle(
+                    color: Colors.black,
+                    knobRadius: 0.06,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      )
 
       // SizedBox(
       //   height: itemHeight,
@@ -753,6 +786,12 @@ class ScreamPageState extends State<ScreamPage> {
       //     ],
       //   ),
       // ),
+      ,
+
+      Text(
+        (stopInSeconds % 60).toString().padLeft(1, '0'),
+        style: pathwayGothicOne48,
+      ),
 
       // Text(
       //   '${((_current?.duration?.inMinutes ?? 0) % 60).toString().padLeft(2, '0')}:${((_current?.duration?.inSeconds ?? 0) % 60).toString().padLeft(2, '0')}.${ms.toString().padLeft(3, '0')}',
@@ -822,91 +861,115 @@ class ScreamPageState extends State<ScreamPage> {
   //   }
   // }
 
-  // int _getLevel(double score, int minimumScore) {
-  //   const epsilon = 100.1;
+  int _getLevel(double score, int minimumScore) {
+    final double level1Min = minimumScore * 0.35;
+    final double level2Min = minimumScore * 0.7;
+    final double levelMax = minimumScore.toDouble();
 
-  //   if (score >= 0 && score < minimumScore * 0.01) {
-  //     return 0; // Level 0
-  //   } else if (score >= minimumScore * 0.01 && score < minimumScore * 0.35) {
-  //     return 1; // Level 1
-  //   } else if (score >= minimumScore * 0.35 && score < minimumScore * 0.7) {
-  //     return 2; // Level 2
-  //   } else if (score >= minimumScore * 0.7 && score <= minimumScore + epsilon) {
-  //     return 3; // Level 3
-  //   } else {
-  //     return -1; // di luar range (opsional untuk handle error)
-  //   }
-  // }
+    // Level 0 → belum mencapai level 1
+    if (score < level1Min) {
+      return 0;
+    }
 
-  // _start() async {
-  //   try {
-  //     await _recorder?.start();
-  //     // score = 0.0;
-  //     var recording = await _recorder?.current(channel: 0);
-  //     setState(() {
-  //       _current = recording;
-  //     });
-  //     const tick = Duration(milliseconds: 24);
-  //     Timer.periodic(tick, (Timer t) async {
-  //       if (_currentStatus == RecordingStatus.Stopped) {
-  //         t.cancel();
-  //       }
+    // Level 1 → sudah melewati level1Min, tapi belum mencapai level2Min
+    if (score >= level1Min && score < level2Min) {
+      return 1;
+    }
 
-  //       var current = await _recorder?.current(channel: 0);
-  //       final peak = current!.metering!.peakPower!;
-  //       // print(current.status);
-  //       ms += tick.inMilliseconds;
-  //       setState(() {
-  //         ms = ms % 1000;
-  //         if (score >= minimumScore) {
-  //           isReached = true;
-  //         }
-  //         if (peak > -20) {
-  //           double temp = (peak.abs() - 20);
-  //           score += temp.abs();
-  //         }
-  //         _currentStatus = _current!.status!;
-  //       });
+    // Level 2 → sudah melewati level2Min, tapi belum mencapai level3Min
+    if (score >= level2Min && score < levelMax) {
+      return 2;
+    }
 
-  //       if (isReached) {
-  //         t.cancel();
-  //         _stop();
-  //       }
-  //     });
+    // Level 3 → sudah mencapai atau melewati level3Min (hingga maksimum)
+    if (score >= levelMax && score <= levelMax) {
+      return 3;
+    }
 
-  //     timer = Timer(Duration(seconds: stopInSeconds), _stop);
-  //   } catch (e) {
-  //     debugPrint('Error: $e');
-  //   }
-  // }
+    // Jika lebih dari batas maksimum (opsional, misal clamp ke Level 3)
+    return 3;
+  }
 
-  // _stop() async {
-  //   debugPrint('stop called');
-  //   if (_currentStatus == RecordingStatus.Recording) {
-  //     var result = await _recorder?.stop();
-  //     timer.cancel();
+  _start() async {
+    try {
+      await _recorder?.start();
+      // score = 0.0;
+      var recording = await _recorder?.current(channel: 0);
+      setState(() {
+        _current = recording;
+      });
+      const tick = Duration(milliseconds: 24);
+      Timer.periodic(tick, (Timer t) async {
+        if (_currentStatus == RecordingStatus.Stopped) {
+          t.cancel();
+        }
 
-  //     File file = widget.localFileSystem.file(result?.path);
-  //     file.deleteSync();
-  //     setState(() {
-  //       _current = result;
-  //       _currentStatus = _current!.status!;
-  //     });
-  //   }
+        var current = await _recorder?.current(channel: 0);
+        final peak = current!.metering!.peakPower!;
+        // print(current.status);
+        ms += tick.inMilliseconds;
+        setState(() {
+          ms = ms % 1000;
+          if (score >= minimumScore) {
+            isReached = true;
+          }
+          if (peak > -20) {
+            double temp = (peak.abs() - 20);
+            score += temp.abs();
+          }
+          _currentStatus = _current!.status!;
+        });
 
-  //   // ✅ Hitung level berdasarkan score
-  //   int level = _getLevel(score, minimumScore);
+        if (isReached) {
+          t.cancel();
+          _stop();
+        }
+      });
 
-  //   if (mounted) {
-  //     if (level == 3) {
-  //       // ✅ Level akhir → langsung ke halaman result
-  //       Navigator.pushNamed(context, '/failed', arguments: level.toString());
-  //     } else {
-  //       // ✅ Level tertentu → tetap lewat tapi bukan gagal
-  //       Navigator.pushNamed(context, '/failed', arguments: level.toString());
-  //     }
-  //   }
-  // }
+      // timer = Timer(Duration(seconds: stopInSeconds), _stop);
+
+      timer = Timer.periodic(const Duration(seconds: 1), (t) {
+        if (stopInSeconds > 0) {
+          setState(() {
+            stopInSeconds--;
+          });
+        } else {
+          t.cancel();
+          _stop(); // otomatis stop ketika waktu habis
+        }
+      });
+    } catch (e) {
+      debugPrint('Error: $e');
+    }
+  }
+
+  _stop() async {
+    debugPrint('stop called');
+    if (_currentStatus == RecordingStatus.Recording) {
+      var result = await _recorder?.stop();
+      timer.cancel();
+
+      File file = widget.localFileSystem.file(result?.path);
+      file.deleteSync();
+      setState(() {
+        _current = result;
+        _currentStatus = _current!.status!;
+      });
+    }
+
+    // ✅ Hitung level berdasarkan score
+    int level = _getLevel(score, minimumScore);
+
+    if (mounted) {
+      if (level == 3) {
+        // ✅ Level akhir → langsung ke halaman result
+        Navigator.pushNamed(context, '/failed', arguments: level.toString());
+      } else {
+        // ✅ Level tertentu → tetap lewat tapi bukan gagal
+        Navigator.pushNamed(context, '/failed', arguments: level.toString());
+      }
+    }
+  }
 
   // _stop() async {
   //   debugPrint('stop called');

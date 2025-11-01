@@ -16,8 +16,8 @@ class SetValuePage extends StatefulWidget {
 class _SetValuePageState extends State<SetValuePage> {
   bool isValid = false;
   final _easyController = TextEditingController();
-  final _medController = TextEditingController();
-  final _hardController = TextEditingController();
+  // final _medController = TextEditingController();
+  // final _hardController = TextEditingController();
   final _timerController = TextEditingController();
   int? savedTimer;
 
@@ -71,17 +71,17 @@ class _SetValuePageState extends State<SetValuePage> {
     final data = levelBox.get('levels');
     if (data != null) {
       _easyController.text = (data['easy'] ?? '').toString();
-      _medController.text = (data['med'] ?? '').toString();
-      _hardController.text = (data['hard'] ?? '').toString();
+      // _medController.text = (data['med'] ?? '').toString();
+      // _hardController.text = (data['hard'] ?? '').toString();
       setState(() => isValid = true);
     }
   }
 
   void _isValid() {
     setState(() {
-      isValid = _easyController.text.isNotEmpty &&
-          _medController.text.isNotEmpty &&
-          _hardController.text.isNotEmpty;
+      isValid = _easyController.text.isNotEmpty;
+      // _medController.text.isNotEmpty &&
+      // _hardController.text.isNotEmpty;
     });
   }
 
@@ -95,8 +95,8 @@ class _SetValuePageState extends State<SetValuePage> {
 
     final newData = {
       'easy': int.tryParse(_easyController.text) ?? 0,
-      'med': int.tryParse(_medController.text) ?? 0,
-      'hard': int.tryParse(_hardController.text) ?? 0,
+      // 'med': int.tryParse(_medController.text) ?? 0,
+      // 'hard': int.tryParse(_hardController.text) ?? 0,
     };
 
     await levelBox.put('levels', newData);
@@ -110,8 +110,8 @@ class _SetValuePageState extends State<SetValuePage> {
   @override
   void dispose() {
     _easyController.dispose();
-    _medController.dispose();
-    _hardController.dispose();
+    // _medController.dispose();
+    // _hardController.dispose();
     _timerController.dispose();
     super.dispose();
   }
@@ -120,16 +120,16 @@ class _SetValuePageState extends State<SetValuePage> {
   Widget build(BuildContext context) {
     return Layout(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/images/logo-clw.png',
-              width: 100,
-              height: 100,
-            ),
-          ],
-        ),
+        // Row(
+        //   mainAxisAlignment: MainAxisAlignment.center,
+        //   children: [
+        //     Image.asset(
+        //       'assets/images/logo-clw.png',
+        //       width: 100,
+        //       height: 100,
+        //     ),
+        //   ],
+        // ),
         SizedBox(height: MediaQuery.of(context).size.height * 0.05),
 
         // 🔹 Title
@@ -176,15 +176,15 @@ class _SetValuePageState extends State<SetValuePage> {
         // ),
         SizedBox(height: MediaQuery.of(context).size.height * 0.05),
 
-        _buildLevelInput('EASY', _easyController),
+        _buildLevelInput('Set Value', _easyController),
 
-        SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+        // SizedBox(height: MediaQuery.of(context).size.height * 0.02),
 
-        _buildLevelInput('MEDIUM', _medController),
+        // _buildLevelInput('MEDIUM', _medController),
 
-        SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+        // SizedBox(height: MediaQuery.of(context).size.height * 0.02),
 
-        _buildLevelInput('HARD', _hardController),
+        // _buildLevelInput('HARD', _hardController),
 
         SizedBox(height: MediaQuery.of(context).size.height * 0.02),
 
@@ -192,17 +192,41 @@ class _SetValuePageState extends State<SetValuePage> {
 
         SizedBox(height: MediaQuery.of(context).size.height * 0.05),
 
-        // 🔹 Tombol Submit
-        InkWell(
-          onTap: () {
+        ElevatedButton(
+          onPressed: () {
             _saveValueLocalTimer();
             _saveValueLocal();
           },
-          child: Image.asset(
-            'assets/images/btn-submit-clw.png',
-            height: 80,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12), // sudut melengkung
+            ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 12,
+            ), // opsional untuk ukuran tombol
+          ),
+          child: const Text(
+            "Simpan",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
+
+        // InkWell(
+        //   onTap: () {
+        //     _saveValueLocalTimer();
+        //     _saveValueLocal();
+        //   },
+        //   child: Image.asset(
+        //     'assets/images/btn-submit-clw.png',
+        //     height: 80,
+        //   ),
+        // ),
       ],
     );
   }
@@ -214,9 +238,9 @@ class _SetValuePageState extends State<SetValuePage> {
         Text(
           label,
           style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w500,
-            color: Colors.white,
+            fontSize: 25,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
           ),
         ),
         // Stack(

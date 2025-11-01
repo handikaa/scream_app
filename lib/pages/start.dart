@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:scream_app/data/local_shared.dart';
 import 'package:scream_app/widgets/loading_overlay.dart';
 
 import '../widgets/layout.dart';
@@ -16,6 +18,19 @@ class _StartPageState extends State<StartPage> {
   int _tapCount = 0;
   int _tapTeks = 0;
   Timer? _resetTimer;
+
+  void saveEasyLevel() async {
+    String data = 'easy';
+
+    await LocalStorageHelper.saveLevel(data);
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    saveEasyLevel();
+  }
 
   void _onLogoTap() {
     _tapCount++;
@@ -58,7 +73,6 @@ class _StartPageState extends State<StartPage> {
   @override
   Widget build(BuildContext context) {
     return Layout(
-      bg: 'assets/images/bg-clw-1.png',
       // decorations: [
       //   // Positioned(
       //   //   bottom: 0,
@@ -71,45 +85,45 @@ class _StartPageState extends State<StartPage> {
       //   // )
       // ],
       children: [
-        SizedBox(
-          height: MediaQuery.of(context).size.height * 0.03,
-        ),
-        GestureDetector(
-          onTap: () => _onLogoTap(),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/images/logo-clw.png',
-                width: 90,
-                height: 90,
-              ),
-            ],
-          ),
-        ),
-        SizedBox(
-          height: MediaQuery.of(context).size.height * 0.05,
-        ),
-        GestureDetector(
-          onTap: () => _onTeksTap(),
-          child: Image.asset(
-            'assets/images/come-clw.png',
-            width: 140,
-            height: 140,
-          ),
-        ),
-        SizedBox(
-          height: MediaQuery.of(context).size.height * 0.04,
-        ),
-        Image.asset(
-          'assets/images/bark-clw.png',
-          width: 40,
-          height: 40,
-        ),
+        // SizedBox(
+        //   height: MediaQuery.of(context).size.height * 0.03,
+        // ),
+        // GestureDetector(
+        //   onTap: () => _onLogoTap(),
+        //   child: Row(
+        //     mainAxisAlignment: MainAxisAlignment.center,
+        //     children: [
+        //       Image.asset(
+        //         'assets/images/logo-clw.png',
+        //         width: 90,
+        //         height: 90,
+        //       ),
+        //     ],
+        //   ),
+        // ),
+        // SizedBox(
+        //   height: MediaQuery.of(context).size.height * 0.05,
+        // ),
+        // GestureDetector(
+        //   onTap: () => _onTeksTap(),
+        //   child: Image.asset(
+        //     'assets/images/come-clw.png',
+        //     width: 140,
+        //     height: 140,
+        //   ),
+        // ),
+        // SizedBox(
+        //   height: MediaQuery.of(context).size.height * 0.04,
+        // ),
+        // Image.asset(
+        //   'assets/images/bark-clw.png',
+        //   width: 40,
+        //   height: 40,
+        // ),
 
-        SizedBox(
-          height: MediaQuery.of(context).size.height * 0.04,
-        ),
+        // SizedBox(
+        //   height: MediaQuery.of(context).size.height * 0.04,
+        // ),
         // const Text(
         //   'SEKUAT APA SUARAMU',
         //   style: passionOne32,
@@ -119,29 +133,34 @@ class _StartPageState extends State<StartPage> {
         //   style: passionOne32,
         // ),
 
-        InkWell(
-          onTap: () async {
-            Navigator.pushNamed(context, '/login');
-            // final permission = await Permission.microphone.request();
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            InkWell(
+              onTap: () async {
+                // Navigator.pushNamed(context, '/login');
+                final permission = await Permission.microphone.request();
 
-            // if (permission.isGranted) {
-            //   // ignore: use_build_context_synchronously
-            //   Navigator.pushNamed(context, '/scream');
-            //   // Navigator.pushNamed(context, '/select-prize');
-            // } else {
-            //   // ignore: use_build_context_synchronously
-            //   ScaffoldMessenger.of(context).showSnackBar(
-            //     const SnackBar(
-            //       content: Text('Akses microphone tidak diberikan!'),
-            //     ),
-            //   );
-            // }
-          },
-          child: Image.asset(
-            'assets/images/btn-start-clw.png',
-            width: 100,
-            height: 100,
-          ),
+                if (permission.isGranted) {
+                  // ignore: use_build_context_synchronously
+                  Navigator.pushNamed(context, '/scream');
+                  // Navigator.pushNamed(context, '/select-prize');
+                } else {
+                  // ignore: use_build_context_synchronously
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Akses microphone tidak diberikan!'),
+                    ),
+                  );
+                }
+              },
+              child: Image.asset(
+                'assets/images/button-sharp.png',
+                width: MediaQuery.of(context).size.width * 0.6,
+                height: MediaQuery.of(context).size.width * 0.6,
+              ),
+            ),
+          ],
         ),
 
         // StartButton(

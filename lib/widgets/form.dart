@@ -47,9 +47,7 @@ class AppTextFormField extends StatelessWidget {
         onChanged: onChanged,
         validator: validator,
         style: const TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: 23,
-            color: Color(0xff9956A3)),
+            fontWeight: FontWeight.w900, fontSize: 23, color: Colors.red),
         decoration: InputDecoration(
           // hintText: hintText,
           hint: Row(
@@ -60,7 +58,7 @@ class AppTextFormField extends StatelessWidget {
                 style: const TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 23,
-                    color: Color(0xff9956A3)),
+                    color: Colors.red),
               ),
             ],
           ),

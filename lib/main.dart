@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:scream_app/data/local_shared.dart';
 import 'package:scream_app/pages/select_level.dart';
 import 'package:scream_app/pages/set_value.dart';
 
@@ -20,7 +21,7 @@ void main() async {
 
   await Hive.openBox('usersBox');
   await Hive.openBox<Map>('levelBox');
-
+  await LocalStorageHelper.clearLevel();
   await SentryFlutter.init(
     (options) {
       options.dsn =
@@ -74,10 +75,12 @@ class _MyAppState extends State<MyApp> {
             );
 
           case '/failed':
-            final arg = settings.arguments as int;
+            // final arg = settings.arguments as int;
+            final arg = settings.arguments as String;
             return MaterialPageRoute(builder: (context) {
               return FailedPage(
-                score: arg,
+                level: arg,
+                // score: arg,
               );
             });
 
